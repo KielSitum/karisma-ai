@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background-color: #F4F5FB;
+    color: #0F1226;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    padding: 0;
+  }
+
+  input, textarea, select {
+    font-family: 'DM Sans', sans-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-primary text-white font-display font-semibold text-sm transition-all duration-200 cursor-pointer;
+    box-shadow: 0 4px 14px rgba(91, 79, 232, 0.35);
+  }
+  .btn-primary:hover {
+    @apply bg-primary-dark;
+    box-shadow: 0 6px 20px rgba(91, 79, 232, 0.45);
+    transform: translateY(-1px);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-transparent font-display font-semibold text-sm transition-all duration-200 cursor-pointer;
+    border: 2px solid #5B4FE8;
+    color: #5B4FE8;
+  }
+  .btn-outline:hover {
+    background-color: #EEEDFE;
+  }
+
+  .card-base {
+    background: white;
+    border: 1px solid #E8EAF2;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(91,79,232,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  .input-base {
+    @apply w-full px-4 py-3 rounded-xl text-sm text-[#0F1226] outline-none transition-all duration-200;
+    border: 1.5px solid #E8EAF2;
+    background: #F8F9FE;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .input-base:focus {
+    border-color: #5B4FE8;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(91,79,232,0.12);
+  }
+  .input-base::placeholder {
+    color: #C4C8D8;
+  }
+}
