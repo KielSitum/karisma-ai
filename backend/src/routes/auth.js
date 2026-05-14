@@ -20,7 +20,10 @@ router.post(
   [
     body('full_name').trim().notEmpty().withMessage('Full name is required'),
     body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
-    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+    body('password')
+      .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+      .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
+      .matches(/[0-9]/).withMessage('Password must contain at least one number'),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -153,7 +156,10 @@ router.patch(
   authMiddleware,
   [
     body('current_password').notEmpty().withMessage('Current password is required'),
-    body('new_password').isLength({ min: 8 }).withMessage('New password must be at least 8 characters'),
+    body('new_password')
+      .isLength({ min: 8 }).withMessage('New password must be at least 8 characters')
+      .matches(/[A-Z]/).withMessage('New password must contain at least one uppercase letter')
+      .matches(/[0-9]/).withMessage('New password must contain at least one number'),
   ],
   async (req, res) => {
     const errors = validationResult(req);

@@ -18,6 +18,8 @@ export default function SecurityTab({ showToast }) {
   const handleChangePassword = async () => {
     if (!curPw || !newPw || !confPw) return showToast('Please fill in all password fields.', 'error');
     if (newPw.length < 8)            return showToast('New password must be at least 8 characters.', 'error');
+    if (!/[A-Z]/.test(newPw))        return showToast('New password must contain an uppercase letter.', 'error');
+    if (!/[0-9]/.test(newPw))        return showToast('New password must contain a number.', 'error');
     if (newPw !== confPw)            return showToast('New passwords do not match.', 'error');
     setSavingPw(true);
     try {
