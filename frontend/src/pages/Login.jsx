@@ -60,6 +60,8 @@ export default function Login() {
     } else {
       if (!name || !email || !pw || !cpw) return setError('Mohon isi semua field.');
       if (pw.length < 8) return setError('Password minimal 8 karakter.');
+      if (!/[A-Z]/.test(pw)) return setError('Password harus mengandung huruf kapital.');
+      if (!/[0-9]/.test(pw)) return setError('Password harus mengandung angka.');
       if (pw !== cpw) return setError('Password tidak cocok.');
       setLoading(true);
       try { await register(name, email, pw); navigate('/dashboard'); }
