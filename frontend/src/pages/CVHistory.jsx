@@ -5,22 +5,21 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 const matchBadge = pct => pct >= 80 ? 'text-[#15803D]' : pct >= 60 ? 'text-[#B45309]' : 'text-[#DC2626]';
-
-const fmtDate = d => new Intl.DateTimeFormat('en',{year:'numeric',month:'short',day:'numeric'}).format(new Date(d));
-const fmtDateShort = d => new Intl.DateTimeFormat('en',{month:'short',day:'numeric'}).format(new Date(d));
+const fmtDate      = d => new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(d));
+const fmtDateShort = d => new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(d));
 
 export default function CVHistory() {
-  const { cvList, deleteCV, getStats } = useCV();
-  const navigate   = useNavigate();
-  const stats      = getStats();
-  const [deleting, setDeleting] = useState(null);
-  const [sortConfig, setSortConfig] = useState({ key: 'DATE', direction: 'desc' });
+  const { cvList, loading, deleteCV, getStats } = useCV();
+  const navigate = useNavigate();
+  const stats    = getStats();
+  const [deleting,    setDeleting]    = useState(null);
+  const [sortConfig,  setSortConfig]  = useState({ key: 'DATE', direction: 'desc' });
 
   const handleDelete = async id => {
     setDeleting(id);
-    await new Promise(r => setTimeout(r, 400));
-    deleteCV(id);
-    setDeleting(null);
+    try { await deleteCV(id); }
+    catch (e) { console.error(e); }
+    finally { setDeleting(null); }
   };
 
   const handleSort = (key) => {
@@ -33,28 +32,28 @@ export default function CVHistory() {
 
   const sortedCVs = [...cvList].sort((a, b) => {
     let aVal, bVal;
-    if (sortConfig.key === 'FILENAME') {
-      aVal = a.filename.toLowerCase();
-      bVal = b.filename.toLowerCase();
-    } else if (sortConfig.key === 'DATE') {
-      aVal = new Date(a.uploaded_at).getTime();
-      bVal = new Date(b.uploaded_at).getTime();
-    } else if (sortConfig.key === 'TOP MATCH') {
-      aVal = a.matches?.[0]?.match_percentage || 0;
-      bVal = b.matches?.[0]?.match_percentage || 0;
-    } else if (sortConfig.key === 'SKILLS') {
-      aVal = a.analysis?.skills?.length || 0;
-      bVal = b.analysis?.skills?.length || 0;
-    } else {
-      return 0;
-    }
-
+    if      (sortConfig.key === 'FILENAME')  { aVal = a.filename.toLowerCase();              bVal = b.filename.toLowerCase(); }
+    else if (sortConfig.key === 'DATE')      { aVal = new Date(a.uploaded_at).getTime();     bVal = new Date(b.uploaded_at).getTime(); }
+    else if (sortConfig.key === 'TOP MATCH') { aVal = a.matches?.[0]?.match_percentage || 0; bVal = b.matches?.[0]?.match_percentage || 0; }
+    else if (sortConfig.key === 'SKILLS')    { aVal = a.analysis?.skills?.length || 0;       bVal = b.analysis?.skills?.length || 0; }
+    else return 0;
     if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
-    if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+    if (aVal > bVal) return sortConfig.direction === 'asc' ?  1 : -1;
     return 0;
   });
 
   const topMatch = cvList[0]?.matches?.[0];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-bg">
+        <Navbar />
+        <main className="flex-1 pt-20 flex items-center justify-center">
+          <div className="w-10 h-10 border-[3px] border-[#E8EAF2] border-t-primary rounded-full" style={{ animation: 'spin 0.8s linear infinite' }} />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-bg">
@@ -112,20 +111,20 @@ export default function CVHistory() {
                 </div>
                 <p className="font-display font-semibold text-[#0F1226] mb-2">No CVs uploaded yet</p>
                 <p className="text-sm text-[#9EA3BC] mb-5">Upload your first CV to see your career analysis results here.</p>
-                <button onClick={()=>navigate('/upload-cv')} className="btn-primary px-6 py-2.5 text-sm">Upload CV Now</button>
+                <button onClick={() => navigate('/upload-cv')} className="btn-primary px-6 py-2.5 text-sm">Upload CV Now</button>
               </div>
             ) : (
               <div className="card-base overflow-hidden">
                 <div className="grid grid-cols-[2fr_1fr_1.5fr_0.8fr_1.2fr] gap-4 px-6 py-3 border-b border-[#E8EAF2] bg-[#F8F9FE]">
-                  {['FILENAME','DATE','TOP MATCH','SKILLS','ACTION'].map(h => (
-                    <div key={h} 
-                         className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 select-none transition-colors ${h !== 'ACTION' ? 'cursor-pointer hover:text-primary' : ''} ${sortConfig.key === h ? 'text-primary' : 'text-[#9EA3BC]'}`}
-                         onClick={() => handleSort(h)}>
+                  {['FILENAME', 'DATE', 'TOP MATCH', 'SKILLS', 'ACTION'].map(h => (
+                    <div key={h}
+                      className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 select-none transition-colors ${h !== 'ACTION' ? 'cursor-pointer hover:text-primary' : ''} ${sortConfig.key === h ? 'text-primary' : 'text-[#9EA3BC]'}`}
+                      onClick={() => handleSort(h)}>
                       {h}
                       {h !== 'ACTION' && (
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"
-                             className={`transition-all ${sortConfig.key === h ? 'opacity-100' : 'opacity-0'} ${sortConfig.key === h && sortConfig.direction === 'desc' ? 'rotate-180' : ''}`}>
-                          <polyline points="18 15 12 9 6 15"/>
+                          className={`transition-all ${sortConfig.key === h ? 'opacity-100' : 'opacity-0'} ${sortConfig.key === h && sortConfig.direction === 'desc' ? 'rotate-180' : ''}`}>
+                          <polyline points="18 15 12 9 6 15" />
                         </svg>
                       )}
                     </div>
@@ -133,10 +132,10 @@ export default function CVHistory() {
                 </div>
 
                 {sortedCVs.map((cv, i) => {
-                  const topM = cv.matches?.[0];
+                  const topM   = cv.matches?.[0];
                   const skills = cv.analysis?.skills?.length || 0;
                   return (
-                    <div key={cv.id} className={`grid grid-cols-[2fr_1fr_1.5fr_0.8fr_1.2fr] gap-4 px-6 py-5 items-center transition-colors hover:bg-[#F8F9FE] ${i < cvList.length-1 ? 'border-b border-[#E8EAF2]' : ''}`}>
+                    <div key={cv.id} className={`grid grid-cols-[2fr_1fr_1.5fr_0.8fr_1.2fr] gap-4 px-6 py-5 items-center transition-colors hover:bg-[#F8F9FE] ${i < cvList.length - 1 ? 'border-b border-[#E8EAF2]' : ''}`}>
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-9 h-9 bg-primary-light rounded-lg flex items-center justify-center flex-shrink-0">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -152,12 +151,11 @@ export default function CVHistory() {
                       ) : <p className="text-sm text-[#9EA3BC]">—</p>}
                       <p className="text-sm font-semibold text-[#0F1226]">{skills}</p>
                       <div className="flex items-center gap-2">
-                        <button onClick={()=>navigate(`/cv-detail/${cv.id}`)}
-                          className="btn-primary text-xs px-4 py-2 rounded-full">View Details</button>
-                        <button onClick={()=>handleDelete(cv.id)} disabled={deleting === cv.id}
+                        <button onClick={() => navigate(`/cv-detail/${cv.id}`)} className="btn-primary text-xs px-4 py-2 rounded-full">View Details</button>
+                        <button onClick={() => handleDelete(cv.id)} disabled={deleting === cv.id}
                           className="w-8 h-8 rounded-full bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-500 flex items-center justify-center transition-all cursor-pointer border-none disabled:opacity-40">
                           {deleting === cv.id
-                            ? <div className="w-3 h-3 border-2 border-red-300 border-t-red-500 rounded-full" style={{animation:'spin 0.7s linear infinite'}}/>
+                            ? <div className="w-3 h-3 border-2 border-red-300 border-t-red-500 rounded-full" style={{ animation: 'spin 0.7s linear infinite' }} />
                             : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/></svg>
                           }
                         </button>
