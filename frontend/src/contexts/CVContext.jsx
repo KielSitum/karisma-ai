@@ -1,8 +1,10 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
+import { api } from '../utils/api';
 
 const CVContext = createContext();
 
+<<<<<<< HEAD
 /* Helper: generate AI recommendation from skill_gaps */
 const makeRec = (gaps) => `Improve your skill in ${gaps.slice(0, -1).join(', ')}${gaps.length > 1 ? ', and ' : ''}${gaps[gaps.length - 1]} to bridge the gap for this role.`;
 
@@ -42,30 +44,32 @@ const DEFAULT_CVS = [
   }
 ];
 
+=======
+>>>>>>> kiel
 export function CVProvider({ children }) {
   const { user } = useAuth();
-  const [cvList, setCvList]       = useState([]);
+  const [cvList,    setCvList]    = useState([]);
+  const [loading,   setLoading]   = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
 
-  useEffect(() => {
+  const fetchCVs = useCallback(async () => {
     if (!user) { setCvList([]); return; }
+    setLoading(true);
     try {
-      const stored = localStorage.getItem('karisma_cvs');
-      if (stored) setCvList(JSON.parse(stored));
-      else {
-        setCvList(DEFAULT_CVS);
-        localStorage.setItem('karisma_cvs', JSON.stringify(DEFAULT_CVS));
-      }
-    } catch(_) { setCvList(DEFAULT_CVS); }
+      const { cvs } = await api.get('/cv');
+      setCvList(cvs || []);
+    } catch (err) {
+      console.error('Failed to fetch CVs:', err.message);
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
-  const persist = (list) => {
-    setCvList(list);
-    localStorage.setItem('karisma_cvs', JSON.stringify(list));
-  };
+  useEffect(() => { fetchCVs(); }, [fetchCVs]);
 
   const uploadAndAnalyze = async (file) => {
     setAnalyzing(true);
+<<<<<<< HEAD
     await new Promise(r => setTimeout(r, 3000));
     const skills = ['React','TypeScript','Node.js','PostgreSQL','Docker','Git','CSS','HTML','REST API','Redux'];
     const newCV = {
@@ -83,18 +87,33 @@ export function CVProvider({ children }) {
     persist(updated);
     setAnalyzing(false);
     return newCV;
+=======
+    try {
+      const formData = new FormData();
+      formData.append('cv', file);
+      const { cv } = await api.upload('/cv/upload', formData);
+      await fetchCVs();
+      return cv;
+    } finally {
+      setAnalyzing(false);
+    }
+>>>>>>> kiel
   };
 
-  const deleteCV = (id) => {
-    const updated = cvList.filter(c => c.id !== id);
-    persist(updated);
+  const deleteCV = async (id) => {
+    await api.delete(`/cv/${id}`);
+    setCvList(prev => prev.filter(c => c.id !== id));
   };
+
+  const getCV = (id) => cvList.find(c => c.id === id) || null;
 
   const getStats = () => {
     const allSkills  = [...new Set(cvList.flatMap(c => c.analysis?.skills || []))];
     const allMatches = cvList.flatMap(c => c.matches || []);
     const latest     = cvList[0];
-    const topMatch   = allMatches.reduce((b, m) => (!b || m.match_percentage > b.match_percentage) ? m : b, null);
+    const topMatch   = allMatches.reduce(
+      (b, m) => (!b || m.match_percentage > b.match_percentage) ? m : b, null
+    );
     return {
       careerMatches:  allMatches.length,
       totalSkills:    allSkills.length,
@@ -104,10 +123,8 @@ export function CVProvider({ children }) {
     };
   };
 
-  const getCV = (id) => cvList.find(c => c.id === id) || null;
-
   return (
-    <CVContext.Provider value={{ cvList, analyzing, uploadAndAnalyze, deleteCV, getStats, getCV }}>
+    <CVContext.Provider value={{ cvList, loading, analyzing, uploadAndAnalyze, deleteCV, getStats, getCV, fetchCVs }}>
       {children}
     </CVContext.Provider>
   );

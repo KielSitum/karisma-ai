@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 const fmtDate = d => new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(d));
 
 export default function CVDetailHeader({ cv }) {
+  // Support status dari DB (pending/analyzed) atau selalu "analyzed" jika tidak ada status
+  const status     = cv?.analysis?.status;
+  const isPending  = status === 'pending';
+
   return (
     <div className="card-base p-5 md:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6 animate-fade-up">
       <div className="w-12 h-12 bg-primary-light rounded-xl flex items-center justify-center flex-shrink-0">
@@ -15,10 +19,17 @@ export default function CVDetailHeader({ cv }) {
       <div className="flex-1 min-w-0">
         <p className="font-display font-bold text-[#0F1226] text-base truncate">{cv.filename}</p>
         <div className="flex items-center gap-2 mt-1">
-          <span className="flex items-center gap-1 text-xs font-semibold text-[#15803D] bg-[#DCFCE7] px-2.5 py-0.5 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#15803D]" />
-            CV successfully analyzed
-          </span>
+          {isPending ? (
+            <span className="flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              Pending Analysis
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-xs font-semibold text-[#15803D] bg-[#DCFCE7] px-2.5 py-0.5 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#15803D]" />
+              CV successfully analyzed
+            </span>
+          )}
           <span className="text-xs text-[#9EA3BC]">·</span>
           <span className="text-xs text-[#9EA3BC]">{fmtDate(cv.uploaded_at)}</span>
         </div>
