@@ -10,9 +10,8 @@ export async function extractTextFromPDF(buffer) {
     const data = await pdfParse(buffer);
     // Clean up the extracted text
     const text = data.text
-      .replace(/\r\n/g, "\n") // normalize line endings
-      .replace(/\n{3,}/g, "\n\n") // collapse excessive blank lines
-      .replace(/[ \t]{2,}/g, " ") // collapse multiple spaces/tabs
+      .replace(/\r?\n/g, " ") // ubah newline jadi spasi
+      .replace(/[ \t]{2,}/g, " ") // hapus spasi berlebih
       .trim();
 
     return {

@@ -69,3 +69,35 @@
     color: #C4C8D8;
   }
 }
+
+.fade-up {
+  opacity: 0;
+  transform: translateY(50px) scale(0.96);
+  transition:
+    opacity 0.8s cubic-bezier(0.22,1,0.36,1),
+    transform 0.8s cubic-bezier(0.22,1,0.36,1),
+    filter 0.8s ease;
+
+  filter: blur(0px);
+  will-change: transform, opacity;
+}
+
+.fade-up.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0px);
+}
+
+@keyframes aurora {
+  from { background-position: 50% 50%, 50% 50%; }
+  to   { background-position: 350% 50%, 350% 50%; }
+}
+
+@keyframes cvScrollUp {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-50%); }
+}
+@keyframes cvScrollDown {
+  from { transform: translateY(-50%); }
+  to   { transform: translateY(0); }
+}
