@@ -1,4 +1,4 @@
-const BASE_URL = 'adequate-reverence-production-14ce.up.railway.app';
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 function getToken() {
   return localStorage.getItem('karisma_token');
@@ -15,6 +15,8 @@ async function request(method, path, { body, isFormData = false } = {}) {
     headers,
     body: isFormData ? body : body ? JSON.stringify(body) : undefined,
   });
+
+  console.log(BASE_URL);
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);

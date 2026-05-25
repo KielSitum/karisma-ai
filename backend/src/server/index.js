@@ -7,9 +7,20 @@ dotenv.config();
 
 const app = express();
 
+// ── Fix COOP header agar Firebase popup bisa bekerja ──────────────────────────
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
+  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+  next();
+});
+
 // ── Middleware ─────────────────────────────────────────────────────────────────
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: [
+    "http://localhost:5173",
+    "https://karisma-ai.vercel.app",
+    "https://karisma-ai.com"
+  ],
   credentials: true,
 }));
 
@@ -33,7 +44,6 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
 
-  // Multer errors
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({ error: 'File size exceeds 10 MB limit' });
   }

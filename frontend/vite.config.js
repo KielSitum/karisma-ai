@@ -10,5 +10,10 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+    // Fix COOP header agar Firebase signInWithPopup bisa bekerja di dev
+    headers: {
+      "Cross-Origin-Opener-Policy": "unsafe-none",
+      "Cross-Origin-Embedder-Policy": "unsafe-none",
+    },
   },
 })

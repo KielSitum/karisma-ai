@@ -10,10 +10,22 @@ function Logo() {
   );
 }
 
-function Avatar({ name = '', size = 34 }) {
-  const initials = name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() || 'U';
-  const colors   = ['#5B4FE8','#7C3AED','#2563EB','#0891B2','#059669'];
+function Avatar({ name = '', avatarUrl = '', size = 34 }) {
+  const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U';
+  const colors   = ['#5B4FE8', '#7C3AED', '#2563EB', '#0891B2', '#059669'];
   const bg       = colors[(name.charCodeAt(0) || 0) % colors.length];
+
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        style={{ width: size, height: size }}
+        className="rounded-full object-cover flex-shrink-0 select-none"
+      />
+    );
+  }
+
   return (
     <span
       style={{ width: size, height: size, background: bg, fontSize: size * 0.38 }}
@@ -30,7 +42,7 @@ function DropdownMenu({ user, onNavigate, onLogout, onClose }) {
       style={{ boxShadow: '0 8px 32px rgba(91,79,232,0.14), 0 4px 16px rgba(0,0,0,0.06)' }}
     >
       <div className="flex items-center gap-3 px-3 py-2 mb-1">
-        <Avatar name={user.full_name} size={38} />
+        <Avatar name={user.full_name} avatarUrl={user.avatar_url || ''} size={38} />
         <div>
           <p className="text-sm font-semibold text-[#0F1226] leading-tight">{user.full_name}</p>
           <p className="text-xs text-[#9EA3BC]">{user.email}</p>
@@ -81,8 +93,6 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', fn);
   }, []);
 
-  // Close dropdown saat klik di luar — pakai mouseup bukan mousedown
-  // supaya onClick di dalam dropdown sempat jalan dulu
   useEffect(() => {
     if (!dropOpen) return;
     const fn = (e) => {
@@ -90,7 +100,6 @@ export default function Navbar() {
         setDrop(false);
       }
     };
-    // delay sedikit supaya event click selesai dulu
     const timer = setTimeout(() => {
       document.addEventListener('click', fn);
     }, 10);
@@ -151,7 +160,7 @@ export default function Navbar() {
                   className="p-[2px] rounded-full border-2 border-transparent hover:border-primary transition-colors duration-200 cursor-pointer"
                   style={{ background: 'transparent' }}
                 >
-                  <Avatar name={user.full_name} />
+                  <Avatar name={user.full_name} avatarUrl={user.avatar_url || ''} />
                 </button>
 
                 {dropOpen && (
@@ -173,7 +182,7 @@ export default function Navbar() {
                   className="p-[2px] rounded-full border-2 border-transparent hover:border-primary transition-colors cursor-pointer"
                   style={{ background: 'transparent' }}
                 >
-                  <Avatar name={user.full_name} />
+                  <Avatar name={user.full_name} avatarUrl={user.avatar_url || ''} />
                 </button>
 
                 {dropOpen && (

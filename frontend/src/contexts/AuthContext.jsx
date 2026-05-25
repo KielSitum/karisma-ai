@@ -1,5 +1,7 @@
   import { createContext, useContext, useState, useEffect } from 'react';
   import { api } from '../utils/api';
+  import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+  import { auth } from '../lib/firebase';
 
   export const AuthContext = createContext();
 
@@ -31,6 +33,37 @@
       return user;
     };
 
+    const loginWithGoogle = async () => {
+      const provider = new GoogleAuthProvider();
+      // Minta user pilih akun setiap kali
+      provider.setCustomParameters({ prompt: 'select_account' });
+
+      // Popup Google sign-in
+      const result = await signInWithPopup(auth, provider);
+
+      // Ambil Firebase ID token
+      const firebaseToken = await result.user.getIdToken();
+
+      try {
+        // Kirim ke backend untuk diverifikasi & dapat JWT app
+        const { token, user } = await api.post('/auth/google', { token: firebaseToken });
+        localStorage.setItem('karisma_token', token);
+        setUser(user);
+        return user;
+      } catch (err) {
+        // Jika belum terdaftar, lempar error khusus dengan info Google
+        if (err.message?.includes('belum terdaftar')) {
+          const googleUser = result.user;
+          const notRegisteredError = new Error('USER_NOT_REGISTERED');
+          notRegisteredError.code = 'USER_NOT_REGISTERED';
+          notRegisteredError.googleName = googleUser.displayName;
+          notRegisteredError.googleEmail = googleUser.email;
+          throw notRegisteredError;
+        }
+        throw err;
+      }
+    };
+
     const logout = () => {
       setUser(null);
       localStorage.removeItem('karisma_token');
@@ -53,7 +86,7 @@
     };
 
     return (
-      <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile, changePassword, deleteAccount }}>
+      <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, logout, updateProfile, changePassword, deleteAccount }}>
         {!loading && children}
       </AuthContext.Provider>
     );

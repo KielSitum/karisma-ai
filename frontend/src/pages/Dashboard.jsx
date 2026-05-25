@@ -45,8 +45,8 @@ export default function Dashboard() {
       <main className="flex-1 pt-24">
         <div className="max-w-[1140px] mx-auto px-6 py-10">
 
-          <div className="mb-8">
-            <h1 className="font-display font-extrabold text-[clamp(28px,4vw,42px)] text-[#0F1226] mb-1">{greeting}</h1>
+          <div className="mb-8 animate-fade-up">
+            <h1 className="font-display font-extrabold text-[clamp(28px,4vw,42px)] text-[#0F1226] mb-1 animate-fade-up">{greeting}</h1>
             <p className="text-[#5A5F7D] text-base">Your career journey is looking promising today.</p>
           </div>
 
@@ -66,7 +66,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 animate-fade-up">
             {statCards.map((c, i) => (
               <div key={i} className="card-base p-5">
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 ${c.color}`}>
@@ -89,7 +89,7 @@ export default function Dashboard() {
             if (topAllMatches.length === 0) return null;
 
             return (
-              <div>
+              <div className="animate-fade-up">
                 <h2 className="font-display font-bold text-2xl text-[#0F1226] mb-5">Top Career Matches</h2>
                 <div className="flex flex-col gap-3">
                   {topAllMatches.map((m, i) => {
