@@ -1,4 +1,4 @@
-# 📖 Data Dictionary — `glints_v2_cleaned.csv`
+# 📖 Data Dictionary 
 
 > **Source:** Glints Indonesia Job Platform  
 > **Pipeline Notebook:** `glints_analysis_fixed_usd.ipynb`  
