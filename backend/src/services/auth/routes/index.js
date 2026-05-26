@@ -94,7 +94,7 @@ router.post("/google", async (req, res) => {
     let user = existingUser;
 
     // Update avatar jika berubah
-    if (picture && user.avatar_url !== picture) {
+    if (picture && !user.avatar_url) {
       const { data: updatedUser } = await supabase
         .from('Users')
         .update({ avatar_url: picture, updated_at: new Date().toISOString() })

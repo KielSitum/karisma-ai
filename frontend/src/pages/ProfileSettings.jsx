@@ -81,34 +81,34 @@ export default function ProfileSettings() {
   };
 
   const handleAvatarChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    // Validasi tipe & ukuran
-    if (!file.type.startsWith('image/')) {
-      return showToast('File harus berupa gambar (JPG, PNG, WebP).', 'error');
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      return showToast('Ukuran foto maksimal 2MB.', 'error');
-    }
+  if (!file.type.startsWith('image/')) {
+    return showToast('File harus berupa gambar (JPG, PNG, WebP).', 'error');
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    return showToast('Ukuran foto maksimal 2MB.', 'error');
+  }
 
-    setUploadingAvatar(true);
-    try {
-      const formData = new FormData();
-      formData.append('avatar', file);
-      const { avatar_url } = await api.upload('/auth/avatar', formData);
-      // Simpan URL asli ke DB, tapi tampilkan dengan cache-busting di UI
-      const avatarWithCache = `${avatar_url}?t=${Date.now()}`;
-      await updateProfile({ avatar_url: avatarWithCache });
-      showToast('Foto profil berhasil diperbarui!');
-    } catch (err) {
-      showToast(err.message || 'Gagal upload foto.', 'error');
-    } finally {
-      setUploadingAvatar(false);
-      // Reset input supaya file yang sama bisa diupload lagi
-      e.target.value = '';
-    }
-  };
+  setUploadingAvatar(true);
+  try {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    const { avatar_url } = await api.upload('/auth/avatar', formData);
+
+    // ✅ Simpan URL bersih ke DB (tanpa ?t=...)
+    await updateProfile({ avatar_url });
+
+    // ✅ Cache-busting hanya untuk update tampilan lokal saja
+    showToast('Foto profil berhasil diperbarui!');
+  } catch (err) {
+    showToast(err.message || 'Gagal upload foto.', 'error');
+  } finally {
+    setUploadingAvatar(false);
+    e.target.value = '';
+  }
+};
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F4F5FB]">
