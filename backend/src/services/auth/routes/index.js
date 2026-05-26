@@ -176,4 +176,46 @@ router.post('/avatar', authMiddleware, avatarUpload.single('avatar'), async (req
   }
 });
 
+router.post("/register-google", async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ success: false, message: "Token is required" });
+
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    const { email, name, picture } = decodedToken;
+
+    const { data: existingUser } = await supabase
+      .from('Users').select('id').eq('email', email).maybeSingle();
+
+    if (existingUser) {
+      return res.status(409).json({ success: false, message: 'Email sudah terdaftar.' });
+    }
+
+    const { data: newUser, error } = await supabase
+      .from('Users')
+      .insert({
+        full_name: name,
+        email,
+        avatar_url: picture || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select('id, full_name, email, avatar_url, created_at, updated_at')
+      .single();
+
+    if (error) throw error;
+
+    const appToken = jwt.sign(
+      { userId: newUser.id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+    );
+
+    res.status(201).json({ success: true, token: appToken, user: newUser });
+  } catch (err) {
+    console.error('Google register error:', err);
+    res.status(500).json({ success: false, message: 'Gagal mendaftarkan akun.' });
+  }
+});
+
 export default router;
