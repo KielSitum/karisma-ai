@@ -45,17 +45,22 @@
         setUser(user);
         return user;
       } catch (err) {
-        if (err.message?.includes('belum terdaftar')) {
+        if (err.message?.includes('404') || err.message?.includes('belum terdaftar')) {
           const notRegisteredError = new Error('USER_NOT_REGISTERED');
           notRegisteredError.code = 'USER_NOT_REGISTERED';
-          notRegisteredError.firebaseToken = firebaseToken; // ← simpan token Firebase
+          notRegisteredError.firebaseToken = firebaseToken;
           throw notRegisteredError;
         }
         throw err;
       }
     };
 
-    const registerWithGoogle = async (firebaseToken) => {
+    const registerWithGoogle = async () => {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(auth, provider);
+      const firebaseToken = await result.user.getIdToken();
+
       const { token, user } = await api.post('/auth/register-google', { token: firebaseToken });
       localStorage.setItem('karisma_token', token);
       setUser(user);

@@ -190,17 +190,20 @@ export default function Login() {
     setError('');
     setGoogleLoading(true);
     try {
-      await loginWithGoogle();
-      navigate('/dashboard');
+      if (tab === 'register') {
+        // Di tab register → langsung daftarkan
+        await registerWithGoogle();
+        navigate('/dashboard');
+      } else {
+        // Di tab login → coba login
+        await loginWithGoogle();
+        navigate('/dashboard');
+      }
     } catch (err) {
       if (err.code === 'USER_NOT_REGISTERED') {
-        // Langsung register tanpa isi form
-        try {
-          await registerWithGoogle(err.firebaseToken);
-          navigate('/dashboard');
-        } catch (regErr) {
-          setError(regErr.message || 'Gagal mendaftarkan akun Google.');
-        }
+        // Tampil pesan, pindah ke tab register
+        switchTab('register');
+        setError('Akun Google ini belum terdaftar. Silakan daftar terlebih dahulu.');
       } else if (
         err.code !== 'auth/popup-closed-by-user' &&
         err.code !== 'auth/cancelled-popup-request'
