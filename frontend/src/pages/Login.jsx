@@ -126,7 +126,7 @@ const STYLES = `
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function Login() {
-  const { login, register, loginWithGoogle } = useAuth();
+  const { login, register, loginWithGoogle, registerWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const [tab, setTab]         = useState('login');
@@ -184,6 +184,8 @@ export default function Login() {
     }
   };
 
+  
+
   const handleGoogle = async () => {
     setError('');
     setGoogleLoading(true);
@@ -191,8 +193,18 @@ export default function Login() {
       await loginWithGoogle();
       navigate('/dashboard');
     } catch (err) {
-      // Abaikan jika user menutup popup
-      if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+      if (err.code === 'USER_NOT_REGISTERED') {
+        // Langsung register tanpa isi form
+        try {
+          await registerWithGoogle(err.firebaseToken);
+          navigate('/dashboard');
+        } catch (regErr) {
+          setError(regErr.message || 'Gagal mendaftarkan akun Google.');
+        }
+      } else if (
+        err.code !== 'auth/popup-closed-by-user' &&
+        err.code !== 'auth/cancelled-popup-request'
+      ) {
         setError(err.message || 'Login dengan Google gagal. Coba lagi.');
       }
     } finally {
