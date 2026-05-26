@@ -202,13 +202,12 @@ export default function Login() {
     } catch (err) {
       if (err.code === 'USER_NOT_REGISTERED') {
         // Tampil pesan, pindah ke tab register
-        switchTab('register');
-        setError('Akun Google ini belum terdaftar. Silakan daftar terlebih dahulu.');
+        setError('User Is Not Registered');
       } else if (
         err.code !== 'auth/popup-closed-by-user' &&
         err.code !== 'auth/cancelled-popup-request'
       ) {
-        setError(err.message || 'Login dengan Google gagal. Coba lagi.');
+        setError(err.message || 'Login Failed. Try Again.');
       }
     } finally {
       setGoogleLoading(false);
@@ -337,7 +336,7 @@ export default function Login() {
                 {googleLoading
                   ? <span className="w-4 h-4 border-2 border-[#9EA3BC]/30 border-t-[#9EA3BC] rounded-full" style={{ animation: 'spin 0.7s linear infinite' }}/>
                   : IcoGoogle}
-                {googleLoading ? 'Menghubungkan...' : 'Continue with Google'}
+                {googleLoading ? 'Menghubungkan...' : 'Google'}
               </button>
             </div>
           </div>

@@ -20,6 +20,7 @@ import admin from "../../../config/firebaseAdmin.js";
 import jwt from "jsonwebtoken";
 import { supabase } from '../../../config/supabase.js';
 import multer from 'multer';
+import crypto from 'crypto';
 
 // Multer untuk avatar (image only, max 2MB)
 const avatarUpload = multer({
@@ -198,7 +199,7 @@ router.post("/register-google", async (req, res) => {
       .insert({
         full_name: name,
         email,
-        password: null,
+        password: crypto.randomBytes(32).toString('hex'), // ← random, tidak bisa dipakai login
         avatar_url: picture || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
