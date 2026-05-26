@@ -19,7 +19,7 @@ async function request(method, path, { body, isFormData = false } = {}) {
   console.log(BASE_URL);
 
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  if (!res.ok) throw new Error(data.error || data.message || `Request failed (${res.status})`);
   return data;
 }
 

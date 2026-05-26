@@ -183,9 +183,11 @@ router.post("/register-google", async (req, res) => {
 
     const decodedToken = await admin.auth().verifyIdToken(token);
     const { email, name, picture } = decodedToken;
+    console.log('1. Decoded:', { email, name });
 
     const { data: existingUser } = await supabase
       .from('Users').select('id').eq('email', email).maybeSingle();
+    console.log('2. Existing user:', existingUser);
 
     if (existingUser) {
       return res.status(409).json({ success: false, message: 'Email sudah terdaftar.' });
@@ -196,12 +198,14 @@ router.post("/register-google", async (req, res) => {
       .insert({
         full_name: name,
         email,
+        password: null,
         avatar_url: picture || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .select('id, full_name, email, avatar_url, created_at, updated_at')
       .single();
+    console.log('3. Insert result:', { newUser, error });
 
     if (error) throw error;
 
@@ -213,8 +217,8 @@ router.post("/register-google", async (req, res) => {
 
     res.status(201).json({ success: true, token: appToken, user: newUser });
   } catch (err) {
-    console.error('Google register error:', err);
-    res.status(500).json({ success: false, message: 'Gagal mendaftarkan akun.' });
+    console.error('4. Error:', err.message);
+    res.status(500).json({ success: false, message: 'Gagal mendaftarkan akun.', detail: err.message });
   }
 });
 
