@@ -9,7 +9,7 @@ const MODELS = [
   "gemini-2.0-flash",
 ];
 
-async function generateWithRetry(prompt, maxRetries = 2) {
+async function generateWithRetry(prompt, maxRetries = 1) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const modelName = MODELS[attempt % MODELS.length];
 
@@ -22,7 +22,7 @@ async function generateWithRetry(prompt, maxRetries = 2) {
         model: modelName,
         contents: prompt,
         config: {
-          temperature: 0.7,
+          temperature: 0.5,
           maxOutputTokens: 4096,
         },
       });
@@ -32,12 +32,12 @@ async function generateWithRetry(prompt, maxRetries = 2) {
       return response;
     } catch (err) {
       const isRetryable =
-        err?.status === 429 ||
         err?.status === 503 ||
-        err?.message?.includes("429") ||
+        err?.status === 429 ||
         err?.message?.includes("503") ||
-        err?.message?.includes("RESOURCE_EXHAUSTED") ||
-        err?.message?.includes("UNAVAILABLE");
+        err?.message?.includes("429") ||
+        err?.message?.includes("UNAVAILABLE") ||
+        err?.message?.includes("RESOURCE_EXHAUSTED");
 
       const isLast = attempt === maxRetries - 1;
 
@@ -47,9 +47,7 @@ async function generateWithRetry(prompt, maxRetries = 2) {
       );
 
       if (isRetryable && !isLast) {
-        const waitMs = 5000 * (attempt + 1);
-
-        console.log(`Retrying in ${waitMs / 1000}s...`);
+        const waitMs = 4000 * (attempt + 1);
 
         await new Promise((r) => setTimeout(r, waitMs));
 
@@ -72,7 +70,7 @@ export async function generateRoadmap(req, res) {
       });
     }
 
-    const limitedSkills = skillGaps.slice(0, 5);
+    const limitedSkills = skillGaps.slice(0, 3);
 
     const skillList = limitedSkills.join(", ");
 
@@ -151,10 +149,8 @@ JSON FORMAT:
 
     const response = await generateWithRetry(prompt);
 
-    const rawText =
-      response.text?.trim?.() ||
-      response.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "";
+    // FIX PENTING
+    const rawText = response.text || "";
 
     console.log("RAW TEXT:");
     console.log(rawText);
@@ -167,13 +163,7 @@ JSON FORMAT:
     let roadmap;
 
     try {
-      const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
-
-      if (!jsonMatch) {
-        throw new Error("Invalid JSON response");
-      }
-
-      roadmap = JSON.parse(jsonMatch[0]);
+      roadmap = JSON.parse(cleanText);
     } catch (parseError) {
       console.error("JSON Parse Error:");
       console.error(cleanText);
