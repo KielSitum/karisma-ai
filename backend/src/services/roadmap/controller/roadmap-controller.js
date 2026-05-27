@@ -9,7 +9,7 @@ const MODELS = [
   "gemini-2.0-flash",
 ];
 
-async function generateWithRetry(prompt, maxRetries = 4) {
+async function generateWithRetry(prompt, maxRetries = 1) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const modelName = MODELS[attempt % MODELS.length];
 

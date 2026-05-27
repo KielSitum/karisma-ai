@@ -25,7 +25,7 @@ const MODELS = [
   "gemini-2.0-flash",
 ];
 
-async function chatWithRetry(contents, maxRetries = 4) {
+async function chatWithRetry(contents, maxRetries = 1) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const modelName = MODELS[attempt % MODELS.length];
 
