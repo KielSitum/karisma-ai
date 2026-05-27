@@ -2,16 +2,51 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-/**
- * POST /api/roadmap/generate
- * Body: { skillGaps: string[] }
- * Generate personalized 4-week learning roadmap using Gemini API.
- */
+const MODELS = [
+  "gemini-1.5-flash-8b",  // paling ringan, fallback utama
+  "gemini-1.5-flash",
+  "gemini-2.5-flash",
+];
+
+async function generateWithRetry(prompt, maxRetries = 4) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const modelName = MODELS[attempt % MODELS.length];
+
+    try {
+      console.log(`Roadmap attempt ${attempt + 1}/${maxRetries} using ${modelName}...`);
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+      console.log(`Roadmap success with ${modelName}`);
+      return result;
+    } catch (err) {
+      const isRetryable =
+        err.status === 503 ||
+        err.status === 429 ||
+        err.message?.includes("503") ||
+        err.message?.includes("429") ||
+        err.message?.includes("UNAVAILABLE") ||
+        err.message?.includes("RESOURCE_EXHAUSTED");
+
+      const isLast = attempt === maxRetries - 1;
+
+      console.error(`Roadmap attempt ${attempt + 1} failed (${modelName}): ${err.message}`);
+
+      if (isRetryable && !isLast) {
+        const waitMs = 4000 * (attempt + 1); // 4s, 8s, 12s
+        console.log(`Waiting ${waitMs / 1000}s before retry...`);
+        await new Promise((r) => setTimeout(r, waitMs));
+        continue;
+      }
+
+      throw err;
+    }
+  }
+}
+
 export async function generateRoadmap(req, res) {
   try {
     const { skillGaps } = req.body;
 
-    // Validate input
     if (!skillGaps || !Array.isArray(skillGaps) || skillGaps.length === 0) {
       return res.status(400).json({
         success: false,
@@ -19,7 +54,6 @@ export async function generateRoadmap(req, res) {
       });
     }
 
-    // Check API key
     if (!process.env.GEMINI_API_KEY) {
       return res.status(500).json({
         success: false,
@@ -27,7 +61,6 @@ export async function generateRoadmap(req, res) {
       });
     }
 
-    // Limit skills to avoid huge prompts
     const limitedSkills = skillGaps.slice(0, 4);
     const skillList = limitedSkills.join(", ");
 
@@ -72,28 +105,7 @@ JSON format:
 Create a realistic and actionable roadmap for Indonesian university students.
 `.trim();
 
-    let result;
-
-    try {
-      // Primary model
-      const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
-      });
-
-      result = await model.generateContent(prompt);
-    } catch (error) {
-      console.log(
-        "gemini-2.5-flash failed, switching to gemini-1.5-flash..."
-      );
-
-      // Fallback model
-      const fallbackModel = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
-      });
-
-      result = await fallbackModel.generateContent(prompt);
-    }
-
+    const result = await generateWithRetry(prompt);
     const rawText = result.response.text();
 
     if (!rawText) {
@@ -103,19 +115,16 @@ Create a realistic and actionable roadmap for Indonesian university students.
       });
     }
 
-    // Clean markdown if Gemini accidentally returns it
     const cleanText = rawText
       .replace(/```json\n?/g, "")
       .replace(/```\n?/g, "")
       .trim();
 
     let roadmap;
-
     try {
       roadmap = JSON.parse(cleanText);
     } catch (parseError) {
       console.error("JSON Parse Error:", parseError);
-
       return res.status(500).json({
         success: false,
         message: "Failed to parse AI response JSON.",
@@ -130,18 +139,22 @@ Create a realistic and actionable roadmap for Indonesian university students.
   } catch (error) {
     console.error("Gemini API Error:", error);
 
-    if (error.status === 503) {
+    const isOverloaded =
+      error.status === 503 ||
+      error.status === 429 ||
+      error.message?.includes("UNAVAILABLE") ||
+      error.message?.includes("RESOURCE_EXHAUSTED");
+
+    if (isOverloaded) {
       return res.status(503).json({
         success: false,
-        message:
-          "AI server is currently busy. Please try again in a few moments.",
+        message: "AI server is currently busy. Please try again in a few moments.",
       });
     }
 
     return res.status(500).json({
       success: false,
-      message:
-        error.message || "An unexpected server error occurred.",
+      message: error.message || "An unexpected server error occurred.",
     });
   }
 }
