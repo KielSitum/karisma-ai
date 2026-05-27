@@ -1,4 +1,7 @@
+import { Router } from "express";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const router = Router();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -23,7 +26,6 @@ async function generateWithRetry(prompt, maxRetries = 3) {
         model: modelName,
       });
 
-      // timeout protection
       const timeoutMs = 30000;
 
       const result = await Promise.race([
@@ -72,14 +74,12 @@ async function generateWithRetry(prompt, maxRetries = 3) {
 }
 
 /**
- * POST /api/roadmap/generate
- * Body: { skillGaps: string[] }
+ * Controller
  */
-export async function generateRoadmap(req, res) {
+async function generateRoadmap(req, res) {
   try {
     const { skillGaps } = req.body;
 
-    // validation
     if (
       !skillGaps ||
       !Array.isArray(skillGaps) ||
@@ -91,14 +91,6 @@ export async function generateRoadmap(req, res) {
       });
     }
 
-    if (!process.env.GEMINI_API_KEY) {
-      return res.status(500).json({
-        success: false,
-        message: "Gemini API key is not configured.",
-      });
-    }
-
-    // limit skills to reduce token usage
     const limitedSkills = skillGaps.slice(0, 4);
 
     const skillList = limitedSkills.join(", ");
@@ -115,71 +107,18 @@ IMPORTANT:
 - No markdown
 - No backticks
 - No explanations outside JSON
-
-JSON format:
-{
-  "summary": "Short motivational summary",
-  "weeks": [
-    {
-      "week": 1,
-      "theme": "Week theme",
-      "goals": ["Goal 1", "Goal 2"],
-      "tasks": [
-        {
-          "day": "Monday - Tuesday",
-          "activity": "Learning activity",
-          "skill": "Skill being learned",
-          "resources": "Learning resources"
-        }
-      ]
-    }
-  ],
-  "tips": [
-    "Tip 1",
-    "Tip 2",
-    "Tip 3"
-  ]
-}
-
-RULES:
-- Maximum 2 goals per week
-- Maximum 3 tasks per week
-- Keep responses concise
-- Make it practical for university students
 `.trim();
 
     const result = await generateWithRetry(prompt);
 
     const rawText = result.response.text();
 
-    if (!rawText) {
-      return res.status(500).json({
-        success: false,
-        message: "AI did not return a response.",
-      });
-    }
-
-    console.log("RAW RESPONSE:");
-    console.log(rawText);
-
-    // clean markdown if Gemini adds it
     const cleanText = rawText
       .replace(/```json\n?/g, "")
       .replace(/```\n?/g, "")
       .trim();
 
-    let roadmap;
-
-    try {
-      roadmap = JSON.parse(cleanText);
-    } catch (parseError) {
-      console.error("JSON Parse Error:", parseError);
-
-      return res.status(500).json({
-        success: false,
-        message: "Failed to parse AI response.",
-      });
-    }
+    const roadmap = JSON.parse(cleanText);
 
     return res.status(200).json({
       success: true,
@@ -189,24 +128,13 @@ RULES:
   } catch (error) {
     console.error("Gemini API Error:", error);
 
-    const is503 =
-      error?.status === 503 ||
-      error?.message?.includes("503") ||
-      error?.message?.includes("UNAVAILABLE");
-
-    if (is503) {
-      return res.status(503).json({
-        success: false,
-        message:
-          "AI service is currently busy. Please try again in a few moments.",
-      });
-    }
-
     return res.status(500).json({
       success: false,
-      message:
-        error.message ||
-        "An unexpected server error occurred.",
+      message: error.message || "Server error",
     });
   }
 }
+
+router.post("/generate", generateRoadmap);
+
+export default router;
