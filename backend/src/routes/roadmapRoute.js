@@ -26,43 +26,54 @@ router.post("/generate", async (req, res) => {
     const skillList = skillGaps.join(", ");
 
     const prompt = `
-Kamu adalah mentor karir yang berpengalaman.
+    You are an experienced career mentor.
 
-Buatkan roadmap belajar intensif 4 minggu untuk mahasiswa Indonesia yang ingin menguasai skill berikut dari level pemula:
+    Create an intensive 4-week learning roadmap for university students who want to master the following skills from beginner level:
 
-${skillList}
+    ${skillList}
 
-ATURAN PENTING:
-- Balas HANYA dengan JSON valid
-- Jangan gunakan markdown
-- Jangan gunakan \`\`\`
-- Jangan tambahkan penjelasan apapun di luar JSON
+    IMPORTANT RULES:
+    - Respond ONLY with valid JSON
+    - Do not use markdown
+    - Do not use \`\`\`
+    - Do not add any explanation outside the JSON
+    - All output must be written in English
+    - Exclude Saturday and Sunday from the schedule
+    - Only create learning tasks for Monday to Friday
+    - Do not include weekend activities
 
-Format JSON:
-{
-  "summary": "Ringkasan motivasi singkat",
-  "weeks": [
+    JSON Format:
     {
-      "week": 1,
-      "theme": "Tema minggu",
-      "goals": ["Goal 1", "Goal 2"],
-      "tasks": [
+      "summary": "Short motivational summary",
+      "weeks": [
         {
-          "day": "Senin - Selasa",
-          "activity": "Aktivitas belajar",
-          "skill": "Skill yang dipelajari",
-          "resources": "Sumber belajar"
+          "week": 1,
+          "theme": "Weekly theme",
+          "goals": ["Goal 1", "Goal 2"],
+          "tasks": [
+            {
+              "day": "Monday",
+              "activity": "Learning activity",
+              "skill": "Skill being learned",
+              "resources": "Learning resources"
+            },
+            {
+              "day": "Tuesday",
+              "activity": "Learning activity",
+              "skill": "Skill being learned",
+              "resources": "Learning resources"
+            }
+          ]
         }
+      ],
+      "tips": [
+        "Tip 1",
+        "Tip 2",
+        "Tip 3"
       ]
     }
-  ],
-  "tips": [
-    "Tips 1",
-    "Tips 2",
-    "Tips 3"
-  ]
-}
-`.trim();
+    `.trim();
+
 
     console.log("Generating roadmap...");
 

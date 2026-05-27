@@ -68,8 +68,7 @@ export default function CVDetailAnalysis() {
                 <div>
                   <h4 className="font-display font-bold text-[#0F1226] mb-1">Analysis Pending</h4>
                   <p className="text-sm text-[#5A5F7D] leading-relaxed">
-                    CV berhasil diupload dan teks berhasil diekstrak. Career matching akan muncul
-                    di sini setelah AI model selesai memproses.
+                    Your CV has been successfully uploaded and the text has been extracted. Career matching will appear here once the AI model has finished processing.
                   </p>
                 </div>
               </div>

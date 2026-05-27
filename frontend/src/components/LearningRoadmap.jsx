@@ -1,49 +1,23 @@
-// src/components/LearningRoadmap.jsx
 import { useState } from "react";
 
-const weekColors = [
-  { bg: "#EEF2FF", accent: "#4F46E5", light: "#C7D2FE" },
-  { bg: "#F0FDF4", accent: "#16A34A", light: "#BBF7D0" },
-  { bg: "#FFF7ED", accent: "#EA580C", light: "#FED7AA" },
-  { bg: "#FDF4FF", accent: "#9333EA", light: "#E9D5FF" },
+// Single source of truth: #5B4FE8
+// bg   = #5B4FE8 at ~8% opacity  → #EEEDFE
+// border = #5B4FE8 at ~20% opacity → #C9C5F7
+const THEME = { accent: "#5B4FE8", bg: "#EEEDFE", border: "#C9C5F7" };
+
+const WEEK_META = [
+  { num: "01", label: "Foundation" },
+  { num: "02", label: "Deepening"  },
+  { num: "03", label: "Practice"   },
+  { num: "04", label: "Mastery"    },
 ];
 
-const skillIcons = {
-  docker: "🐳",
-  git: "🌿",
-  sql: "🗄️",
-  python: "🐍",
-  javascript: "⚡",
-  react: "⚛️",
-  nodejs: "🟢",
-  java: "☕",
-  typescript: "📘",
-  kubernetes: "⚙️",
-  aws: "☁️",
-  linux: "🐧",
-  default: "📚",
-};
-
-function getSkillIcon(skill) {
-  const key = skill?.toLowerCase();
-  for (const [k, v] of Object.entries(skillIcons)) {
-    if (key?.includes(k)) return v;
-  }
-  return skillIcons.default;
-}
-
-/**
- * LearningRoadmap
- * Props:
- *   skillGaps: string[] — daftar skill gap dari Career_Matches.Skill_gaps
- */
 export default function LearningRoadmap({ skillGaps }) {
-  const [roadmap, setRoadmap] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [roadmap, setRoadmap]           = useState(null);
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState(null);
   const [expandedWeek, setExpandedWeek] = useState(0);
 
-  // Normalise: terima array atau CSV string
   const gaps = Array.isArray(skillGaps)
     ? skillGaps
     : typeof skillGaps === "string"
@@ -55,11 +29,9 @@ export default function LearningRoadmap({ skillGaps }) {
     setLoading(true);
     setError(null);
     setRoadmap(null);
-
     try {
       const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
       const token = localStorage.getItem("karisma_token");
-
       const res = await fetch(`${BASE_URL}/roadmap/generate`, {
         method: "POST",
         headers: {
@@ -68,13 +40,8 @@ export default function LearningRoadmap({ skillGaps }) {
         },
         body: JSON.stringify({ skillGaps: gaps }),
       });
-
       const data = await res.json();
-
-      if (!data.success) {
-        throw new Error(data.message || "Gagal membuat roadmap");
-      }
-
+      if (!data.success) throw new Error(data.message || "Failed to generate roadmap");
       setRoadmap(data.roadmap);
       setExpandedWeek(0);
     } catch (err) {
@@ -87,143 +54,217 @@ export default function LearningRoadmap({ skillGaps }) {
   if (gaps.length === 0) return null;
 
   return (
-    <div style={styles.container}>
-      {/* Header */}
-      <div style={styles.header}>
-        <div style={styles.headerIcon}>🗺️</div>
-        <div>
-          <h2 style={styles.headerTitle}>Personalized Learning Roadmap</h2>
-          <p style={styles.headerSubtitle}>
-            AI akan buatkan jadwal belajar 4 minggu khusus untuk kamu
-          </p>
+    <div className="mt-8 flex flex-col gap-5 animate-fade-up">
+
+      {/* ── Header Card ── */}
+      <div className="card-base p-6 md:p-8 relative overflow-hidden">
+        <div
+          className="absolute top-0 left-0 right-0 h-[3px] rounded-t-3xl"
+          style={{ background: "#5B4FE8" }}
+        />
+        <div className="flex items-start gap-4 pt-1">
+          <div
+            className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: THEME.bg, border: `1px solid ${THEME.border}` }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h2 className="font-display font-extrabold text-[17px] text-[#0F1226] mb-1">
+              Personalized Learning Roadmap
+            </h2>
+            <p className="text-sm text-[#5A5F7D] leading-relaxed">
+              A 4-week personalized learning roadmap designed specifically based on your skill gaps
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Skill Gap Tags */}
-      <div style={styles.skillSection}>
-        <p style={styles.skillLabel}>Skill yang perlu dikuasai:</p>
-        <div style={styles.skillTags}>
+      {/* ── Skill Gap Tags ── */}
+      <div>
+        <p className="text-[11px] font-bold text-[#9EA3BC] uppercase tracking-widest mb-3">
+          Skills to Master
+        </p>
+        <div className="flex flex-wrap gap-2">
           {gaps.map((skill, i) => (
-            <span key={i} style={styles.skillTag}>
-              {getSkillIcon(skill)} {skill}
+            <span
+              key={i}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+              style={{ background: THEME.bg, color: "#5B4FE8", border: `1px solid ${THEME.border}` }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#5B4FE8" }} />
+              {skill}
             </span>
           ))}
         </div>
       </div>
 
-      {/* Generate Button */}
+      {/* ── Generate Button ── */}
       {!roadmap && (
         <button
           onClick={generateRoadmap}
           disabled={loading}
-          style={{
-            ...styles.generateBtn,
-            opacity: loading ? 0.7 : 1,
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
+          className="btn-primary font-display w-full py-3.5 text-[15px] font-bold flex items-center justify-center gap-2 rounded-xl disabled:opacity-60 disabled:cursor-not-allowed"
+          style={{ background: "#5B4FE8" }}
         >
           {loading ? (
-            <span style={styles.loadingContent}>
-              <span style={styles.spinner} />
-              Membuat roadmap belajarmu...
-            </span>
+            <>
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Creating your learning roadmap...
+            </>
           ) : (
-            "✨ Buat Roadmap Belajar Saya"
+            <>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+              Create My Learning Roadmap
+            </>
           )}
         </button>
       )}
 
-      {/* Error */}
+      {/* ── Error State ── */}
       {error && (
-        <div style={styles.errorBox}>
-          <span>⚠️ {error}</span>
-          <button onClick={generateRoadmap} style={styles.retryBtn}>
-            Coba Lagi
+        <div
+          className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl"
+          style={{ background: THEME.bg, border: `1px solid ${THEME.border}` }}
+        >
+          <span className="text-sm flex items-center gap-2" style={{ color: "#5B4FE8" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            {error}
+          </span>
+          <button
+            onClick={generateRoadmap}
+            className="text-xs font-semibold bg-transparent rounded-lg px-3 py-1.5 cursor-pointer transition-colors whitespace-nowrap"
+            style={{ color: "#5B4FE8", border: `1px solid ${THEME.border}` }}
+            onMouseEnter={e => e.currentTarget.style.background = THEME.border}
+            onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+          >
+            Try Again
           </button>
         </div>
       )}
 
-      {/* Roadmap Result */}
+      {/* ── Roadmap Result ── */}
       {roadmap && (
-        <div style={styles.roadmapContainer}>
+        <div className="flex flex-col gap-4">
+
           {/* Summary */}
-          <div style={styles.summaryBox}>
-            <span style={styles.summaryIcon}>💡</span>
-            <p style={styles.summaryText}>{roadmap.summary}</p>
+          <div className="card-base p-5 border-l-[3px]" style={{ borderLeftColor: "#5B4FE8" }}>
+            <p className="text-sm text-[#5A5F7D] leading-relaxed">{roadmap.summary}</p>
           </div>
 
-          {/* Week Tabs */}
-          <div style={styles.weekTabs}>
-            {roadmap.weeks?.map((week, i) => (
-              <button
-                key={i}
-                onClick={() => setExpandedWeek(i)}
-                style={{
-                  ...styles.weekTab,
-                  backgroundColor:
-                    expandedWeek === i ? weekColors[i % 4].accent : "#F3F4F6",
-                  color: expandedWeek === i ? "#fff" : "#374151",
-                }}
-              >
-                Minggu {week.week}
-              </button>
-            ))}
+          {/* Week Navigation Pills */}
+          <div className="grid grid-cols-4 gap-2">
+            {roadmap.weeks?.map((week, i) => {
+              const meta = WEEK_META[i % 4];
+              const isActive = expandedWeek === i;
+              return (
+                <button
+                  key={i}
+                  onClick={() => setExpandedWeek(i)}
+                  className="font-display flex flex-col items-center gap-1 py-3 px-2 rounded-xl border transition-all duration-200 cursor-pointer"
+                  style={isActive
+                    ? { background: "#5B4FE8", borderColor: "#5B4FE8", color: "#fff", boxShadow: "0 4px 14px rgba(91,79,232,0.30)" }
+                    : { background: THEME.bg, borderColor: THEME.border, color: "#5B4FE8" }
+                  }
+                >
+                  <span className="text-lg font-extrabold leading-none tracking-tight">{meta.num}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">{meta.label}</span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Active Week Content */}
+          {/* Active Week Detail */}
           {roadmap.weeks?.map((week, i) => {
             if (i !== expandedWeek) return null;
-            const color = weekColors[i % 4];
+            const meta = WEEK_META[i % 4];
             return (
-              <div key={i} style={{ ...styles.weekCard, backgroundColor: color.bg }}>
-                <div style={styles.weekHeader}>
-                  <div style={{ ...styles.weekBadge, backgroundColor: color.accent }}>
-                    Minggu {week.week}
+              <div key={i} className="card-base overflow-hidden">
+
+                {/* Week Header */}
+                <div className="flex items-center gap-3 px-6 py-4" style={{ background: "#5B4FE8" }}>
+                  <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[13px] font-extrabold text-white tracking-tight">{meta.num}</span>
                   </div>
-                  <h3 style={{ ...styles.weekTheme, color: color.accent }}>
-                    {week.theme}
-                  </h3>
+                  <div>
+                    <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-0.5">
+                      Week {week.week}
+                    </p>
+                    <h3 className="font-display text-[15px] font-bold text-white leading-none">{week.theme}</h3>
+                  </div>
+                  <div className="ml-auto">
+                    <span
+                      className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+                      style={{ background: "rgba(255,255,255,0.18)", color: "#fff" }}
+                    >
+                      {meta.label}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Goals */}
-                <div>
-                  <p style={styles.sectionLabel}>🎯 Target Minggu Ini:</p>
-                  <ul style={styles.goalsList}>
-                    {week.goals?.map((goal, gi) => (
-                      <li key={gi} style={styles.goalItem}>
-                        <span style={{ ...styles.goalDot, backgroundColor: color.accent }} />
-                        {goal}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {/* Week Body */}
+                <div className="p-6 flex flex-col gap-6">
 
-                {/* Tasks */}
-                <div>
-                  <p style={styles.sectionLabel}>📅 Jadwal Harian:</p>
-                  <div style={styles.tasksList}>
-                    {week.tasks?.map((task, ti) => (
-                      <div key={ti} style={styles.taskCard}>
-                        <div style={styles.taskHeader}>
-                          <span
-                            style={{
-                              ...styles.taskDay,
-                              backgroundColor: color.light,
-                              color: color.accent,
-                            }}
-                          >
-                            {task.day}
-                          </span>
-                          <span style={styles.taskSkill}>
-                            {getSkillIcon(task.skill)} {task.skill}
-                          </span>
+                  {/* Goals */}
+                  <div>
+                    <p className="text-[11px] font-bold text-[#9EA3BC] uppercase tracking-widest mb-3">
+                      This Week's Goals
+                    </p>
+                    <ul className="flex flex-col gap-2.5">
+                      {week.goals?.map((goal, gi) => (
+                        <li key={gi} className="flex items-start gap-2.5 text-sm text-[#3A3F5C] leading-relaxed">
+                          <svg className="flex-shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" stroke="#5B4FE8">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                          {goal}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="h-px" style={{ background: THEME.border }} />
+
+                  {/* Tasks */}
+                  <div>
+                    <p className="text-[11px] font-bold text-[#9EA3BC] uppercase tracking-widest mb-3">
+                      Daily Schedule
+                    </p>
+                    <div className="flex flex-col gap-3">
+                      {week.tasks?.map((task, ti) => (
+                        <div
+                          key={ti}
+                          className="rounded-xl p-4"
+                          style={{ background: THEME.bg, border: `1px solid ${THEME.border}` }}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <span
+                              className="text-[11px] font-bold px-2.5 py-1 rounded-lg text-white"
+                              style={{ background: "#5B4FE8" }}
+                            >
+                              {task.day}
+                            </span>
+                            <span className="text-[11px] font-semibold" style={{ color: "#5B4FE8" }}>
+                              {task.skill}
+                            </span>
+                          </div>
+                          <p className="text-sm text-[#0F1226] mb-1.5 leading-relaxed">{task.activity}</p>
+                          {task.resources && (
+                            <p className="text-[11px] text-[#9EA3BC] flex items-center gap-1.5">
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+                              </svg>
+                              {task.resources}
+                            </p>
+                          )}
                         </div>
-                        <p style={styles.taskActivity}>{task.activity}</p>
-                        {task.resources && (
-                          <p style={styles.taskResource}>📖 {task.resources}</p>
-                        )}
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -232,12 +273,19 @@ export default function LearningRoadmap({ skillGaps }) {
 
           {/* Tips */}
           {roadmap.tips?.length > 0 && (
-            <div style={styles.tipsBox}>
-              <p style={styles.tipsTitle}>🚀 Tips Sukses Belajar:</p>
-              <ul style={styles.tipsList}>
+            <div className="card-base p-6">
+              <p className="text-[11px] font-bold text-[#9EA3BC] uppercase tracking-widest mb-4">
+                Learning Success Tips
+              </p>
+              <ul className="flex flex-col gap-3">
                 {roadmap.tips.map((tip, i) => (
-                  <li key={i} style={styles.tipItem}>
-                    <span style={styles.tipNumber}>{i + 1}</span>
+                  <li key={i} className="flex items-start gap-3 text-sm text-[#5A5F7D] leading-relaxed">
+                    <span
+                      className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 mt-0.5 text-white"
+                      style={{ background: "#5B4FE8" }}
+                    >
+                      {i + 1}
+                    </span>
                     {tip}
                   </li>
                 ))}
@@ -245,176 +293,43 @@ export default function LearningRoadmap({ skillGaps }) {
             </div>
           )}
 
-          {/* Regenerate */}
-          <button
-            onClick={() => { setRoadmap(null); }}
-            style={styles.regenerateBtn}
+          {/* Insight Box */}
+          <div
+            className="rounded-xl p-4 md:p-5 flex gap-4 items-start"
+            style={{ background: THEME.bg, border: `1px solid ${THEME.border}` }}
           >
-            🔄 Buat Roadmap Baru
-          </button>
+            <div
+              className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center flex-shrink-0"
+              style={{ color: "#5B4FE8" }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+              </svg>
+            </div>
+            <p className="text-sm text-[#5A5F7D] leading-relaxed pt-1.5">
+              <span className="font-semibold text-[#0F1226]">Tip: </span>
+              Consistency is more important than intensity. Studying for 45 minutes every day is more effective than doing a long study marathon once a week.
+            </p>
+          </div>
+
+          {/* Regenerate */}
+          <div className="flex justify-center pb-2">
+            <button
+              onClick={() => setRoadmap(null)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-transparent transition-all duration-150 cursor-pointer"
+              style={{ color: "#5B4FE8", border: `1px solid ${THEME.border}` }}
+              onMouseEnter={e => { e.currentTarget.style.background = THEME.bg; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+              </svg>
+              Create new roadmap
+            </button>
+          </div>
+
         </div>
       )}
     </div>
   );
 }
-
-const styles = {
-  container: {
-    fontFamily: "'Segoe UI', sans-serif",
-    marginTop: "32px",
-  },
-  header: {
-    display: "flex",
-    alignItems: "center",
-    gap: "16px",
-    marginBottom: "20px",
-    padding: "20px",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    borderRadius: "16px",
-    color: "#fff",
-  },
-  headerIcon: { fontSize: "40px" },
-  headerTitle: { margin: "0 0 4px 0", fontSize: "20px", fontWeight: "700" },
-  headerSubtitle: { margin: 0, fontSize: "14px", opacity: 0.85 },
-  skillSection: { marginBottom: "16px" },
-  skillLabel: { margin: "0 0 8px 0", fontSize: "14px", color: "#6B7280", fontWeight: "600" },
-  skillTags: { display: "flex", flexWrap: "wrap", gap: "8px" },
-  skillTag: {
-    padding: "6px 14px",
-    background: "#EEF2FF",
-    color: "#4F46E5",
-    borderRadius: "20px",
-    fontSize: "13px",
-    fontWeight: "600",
-    border: "1px solid #C7D2FE",
-  },
-  generateBtn: {
-    width: "100%",
-    padding: "16px",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    color: "#fff",
-    border: "none",
-    borderRadius: "12px",
-    fontSize: "16px",
-    fontWeight: "700",
-    cursor: "pointer",
-    marginBottom: "16px",
-  },
-  loadingContent: { display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" },
-  spinner: {
-    width: "18px",
-    height: "18px",
-    border: "3px solid rgba(255,255,255,0.3)",
-    borderTop: "3px solid #fff",
-    borderRadius: "50%",
-    animation: "spin 1s linear infinite",
-    display: "inline-block",
-  },
-  errorBox: {
-    padding: "16px",
-    background: "#FEF2F2",
-    border: "1px solid #FECACA",
-    borderRadius: "12px",
-    color: "#DC2626",
-    marginBottom: "16px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "12px",
-  },
-  retryBtn: {
-    padding: "6px 14px",
-    background: "#DC2626",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontSize: "13px",
-    flexShrink: 0,
-  },
-  roadmapContainer: { display: "flex", flexDirection: "column", gap: "16px" },
-  summaryBox: {
-    display: "flex",
-    gap: "12px",
-    padding: "16px 20px",
-    background: "#FFFBEB",
-    border: "1px solid #FDE68A",
-    borderRadius: "12px",
-    alignItems: "flex-start",
-  },
-  summaryIcon: { fontSize: "22px", marginTop: "2px" },
-  summaryText: { margin: 0, color: "#92400E", fontSize: "15px", lineHeight: "1.6" },
-  weekTabs: { display: "flex", gap: "8px", flexWrap: "wrap" },
-  weekTab: {
-    padding: "8px 20px",
-    border: "none",
-    borderRadius: "20px",
-    fontSize: "14px",
-    fontWeight: "600",
-    cursor: "pointer",
-    transition: "all 0.2s",
-  },
-  weekCard: {
-    borderRadius: "16px",
-    padding: "20px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-  },
-  weekHeader: { display: "flex", alignItems: "center", gap: "12px" },
-  weekBadge: {
-    color: "#fff",
-    padding: "4px 12px",
-    borderRadius: "20px",
-    fontSize: "12px",
-    fontWeight: "700",
-  },
-  weekTheme: { margin: 0, fontSize: "18px", fontWeight: "700" },
-  sectionLabel: { margin: "0 0 10px 0", fontSize: "14px", fontWeight: "700", color: "#374151" },
-  goalsList: { margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "6px" },
-  goalItem: { display: "flex", alignItems: "center", gap: "10px", fontSize: "14px", color: "#374151" },
-  goalDot: { width: "8px", height: "8px", borderRadius: "50%", flexShrink: 0 },
-  tasksList: { display: "flex", flexDirection: "column", gap: "10px" },
-  taskCard: {
-    background: "rgba(255,255,255,0.75)",
-    borderRadius: "10px",
-    padding: "14px",
-  },
-  taskHeader: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" },
-  taskDay: { padding: "3px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: "700" },
-  taskSkill: { fontSize: "13px", fontWeight: "600", color: "#6B7280" },
-  taskActivity: { margin: "0 0 6px 0", fontSize: "14px", color: "#1F2937", lineHeight: "1.5" },
-  taskResource: { margin: 0, fontSize: "12px", color: "#6B7280", fontStyle: "italic" },
-  tipsBox: {
-    padding: "20px",
-    background: "#F0FDF4",
-    border: "1px solid #BBF7D0",
-    borderRadius: "12px",
-  },
-  tipsTitle: { margin: "0 0 12px 0", fontWeight: "700", color: "#166534" },
-  tipsList: { margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "8px" },
-  tipItem: { display: "flex", alignItems: "flex-start", gap: "10px", fontSize: "14px", color: "#166534" },
-  tipNumber: {
-    minWidth: "22px",
-    height: "22px",
-    background: "#16A34A",
-    color: "#fff",
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "12px",
-    fontWeight: "700",
-  },
-  regenerateBtn: {
-    padding: "10px 20px",
-    background: "transparent",
-    border: "2px solid #D1D5DB",
-    borderRadius: "10px",
-    fontSize: "14px",
-    fontWeight: "600",
-    cursor: "pointer",
-    color: "#374151",
-    alignSelf: "center",
-  },
-};
