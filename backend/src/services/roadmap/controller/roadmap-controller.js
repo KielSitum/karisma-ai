@@ -32,17 +32,18 @@ async function generateWithRetry(prompt, maxRetries = 4) {
       return response;
     } catch (err) {
       const isRetryable =
-        err.status === 503 ||
-        err.status === 429 ||
-        err.message?.includes("503") ||
-        err.message?.includes("429") ||
-        err.message?.includes("UNAVAILABLE") ||
-        err.message?.includes("RESOURCE_EXHAUSTED");
+        err?.status === 503 ||
+        err?.status === 429 ||
+        err?.message?.includes("503") ||
+        err?.message?.includes("429") ||
+        err?.message?.includes("UNAVAILABLE") ||
+        err?.message?.includes("RESOURCE_EXHAUSTED");
 
       const isLast = attempt === maxRetries - 1;
 
       console.error(
-        `Roadmap attempt ${attempt + 1} failed (${modelName}): ${err.message}`
+        `Roadmap attempt ${attempt + 1} failed (${modelName}):`,
+        err.message
       );
 
       if (isRetryable && !isLast) {
@@ -87,6 +88,9 @@ IMPORTANT RULES:
 - Do NOT use markdown
 - Do NOT use backticks
 - Do NOT add explanations outside JSON
+- Return compact valid JSON only
+- Use double quotes for all strings
+- Do not include trailing commas
 
 JSON format:
 {
@@ -116,14 +120,33 @@ JSON format:
 
     const response = await generateWithRetry(prompt);
 
-    const rawText = response.text;
+    console.log("ROADMAP RESPONSE:");
+    console.dir(response, { depth: null });
+
+    const rawText =
+      response?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    console.log("RAW TEXT:");
+    console.log(rawText);
 
     const cleanText = rawText
       .replace(/```json\n?/g, "")
       .replace(/```\n?/g, "")
       .trim();
 
-    const roadmap = JSON.parse(cleanText);
+    let roadmap;
+
+    try {
+      roadmap = JSON.parse(cleanText);
+    } catch (parseError) {
+      console.error("JSON Parse Error:");
+      console.error(cleanText);
+
+      return res.status(500).json({
+        success: false,
+        message: "AI returned invalid JSON format.",
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -133,6 +156,20 @@ JSON format:
   } catch (error) {
     console.error("===== ROADMAP ERROR =====");
     console.error(error);
+
+    const isOverloaded =
+      error?.status === 503 ||
+      error?.status === 429 ||
+      error?.message?.includes("UNAVAILABLE") ||
+      error?.message?.includes("RESOURCE_EXHAUSTED");
+
+    if (isOverloaded) {
+      return res.status(503).json({
+        success: false,
+        message:
+          "AI server is currently busy. Please try again in a few moments.",
+      });
+    }
 
     return res.status(500).json({
       success: false,
