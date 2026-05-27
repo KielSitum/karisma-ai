@@ -9,7 +9,7 @@ const MODELS = [
   "gemini-2.0-flash",
 ];
 
-async function generateWithRetry(prompt, maxRetries = 1) {
+async function generateWithRetry(prompt, maxRetries = 2) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const modelName = MODELS[attempt % MODELS.length];
 
@@ -22,8 +22,8 @@ async function generateWithRetry(prompt, maxRetries = 1) {
         model: modelName,
         contents: prompt,
         config: {
-          temperature: 0.5,
-          maxOutputTokens: 1024,
+          temperature: 0.7,
+          maxOutputTokens: 4096,
         },
       });
 
@@ -32,12 +32,12 @@ async function generateWithRetry(prompt, maxRetries = 1) {
       return response;
     } catch (err) {
       const isRetryable =
-        err?.status === 503 ||
         err?.status === 429 ||
-        err?.message?.includes("503") ||
+        err?.status === 503 ||
         err?.message?.includes("429") ||
-        err?.message?.includes("UNAVAILABLE") ||
-        err?.message?.includes("RESOURCE_EXHAUSTED");
+        err?.message?.includes("503") ||
+        err?.message?.includes("RESOURCE_EXHAUSTED") ||
+        err?.message?.includes("UNAVAILABLE");
 
       const isLast = attempt === maxRetries - 1;
 
@@ -47,7 +47,9 @@ async function generateWithRetry(prompt, maxRetries = 1) {
       );
 
       if (isRetryable && !isLast) {
-        const waitMs = 4000 * (attempt + 1);
+        const waitMs = 5000 * (attempt + 1);
+
+        console.log(`Retrying in ${waitMs / 1000}s...`);
 
         await new Promise((r) => setTimeout(r, waitMs));
 
@@ -70,46 +72,89 @@ export async function generateRoadmap(req, res) {
       });
     }
 
-    const limitedSkills = skillGaps.slice(0, 3);
+    const limitedSkills = skillGaps.slice(0, 5);
 
     const skillList = limitedSkills.join(", ");
 
     const prompt = `
-Return ONLY valid JSON.
+You are an experienced career mentor and professional learning advisor.
 
-Create a concise 4-week learning roadmap for these skills:
+Create a comprehensive and practical 4-week learning roadmap for a university student who wants to learn these skills from beginner level:
 
 ${skillList}
 
-Rules:
-- Valid JSON only
-- No markdown
-- No explanation
-- Maximum 2 tasks per week
-- Keep text short
+IMPORTANT RULES:
+- Respond ONLY with valid JSON
+- Do NOT use markdown
+- Do NOT use backticks
+- Do NOT add explanations outside JSON
+- Use ONLY double quotes
+- No trailing commas
+- Write everything in English
+- Make the roadmap beginner-friendly
+- Make tasks practical and actionable
+- Include realistic daily learning activities
+- Include mini projects or practice sessions
+- Include useful beginner-friendly resources
+- Each week must contain:
+  - 1 theme
+  - at least 3 goals
+  - at least 4 tasks
 
-Format:
+JSON FORMAT:
 {
-  "summary": "text",
+  "summary": "Short motivational summary",
   "weeks": [
     {
       "week": 1,
-      "theme": "text",
+      "theme": "Week theme",
+      "goals": [
+        "Goal 1",
+        "Goal 2",
+        "Goal 3"
+      ],
       "tasks": [
         {
-          "day": "text",
-          "activity": "text"
+          "day": "Monday",
+          "activity": "Learning activity",
+          "skill": "Skill being learned",
+          "resources": "Learning resources"
+        },
+        {
+          "day": "Tuesday",
+          "activity": "Learning activity",
+          "skill": "Skill being learned",
+          "resources": "Learning resources"
+        },
+        {
+          "day": "Wednesday - Thursday",
+          "activity": "Learning activity",
+          "skill": "Skill being learned",
+          "resources": "Learning resources"
+        },
+        {
+          "day": "Friday - Sunday",
+          "activity": "Mini project or practice",
+          "skill": "Skill being learned",
+          "resources": "Learning resources"
         }
       ]
     }
+  ],
+  "tips": [
+    "Tip 1",
+    "Tip 2",
+    "Tip 3"
   ]
 }
 `.trim();
 
     const response = await generateWithRetry(prompt);
 
-    // FIX PENTING
-    const rawText = response.text || "";
+    const rawText =
+      response.text?.trim?.() ||
+      response.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "";
 
     console.log("RAW TEXT:");
     console.log(rawText);
@@ -122,7 +167,13 @@ Format:
     let roadmap;
 
     try {
-      roadmap = JSON.parse(cleanText);
+      const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+
+      if (!jsonMatch) {
+        throw new Error("Invalid JSON response");
+      }
+
+      roadmap = JSON.parse(jsonMatch[0]);
     } catch (parseError) {
       console.error("JSON Parse Error:");
       console.error(cleanText);
