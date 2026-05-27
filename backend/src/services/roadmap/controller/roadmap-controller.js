@@ -1,11 +1,12 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
 
 const MODELS = [
-  "gemini-1.5-flash-8b",  // paling ringan, fallback utama
-  "gemini-1.5-flash",
   "gemini-2.5-flash",
+  "gemini-2.0-flash",
 ];
 
 async function generateWithRetry(prompt, maxRetries = 4) {
@@ -13,11 +14,22 @@ async function generateWithRetry(prompt, maxRetries = 4) {
     const modelName = MODELS[attempt % MODELS.length];
 
     try {
-      console.log(`Roadmap attempt ${attempt + 1}/${maxRetries} using ${modelName}...`);
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
+      console.log(
+        `Roadmap attempt ${attempt + 1}/${maxRetries} using ${modelName}`
+      );
+
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: prompt,
+        config: {
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+        },
+      });
+
       console.log(`Roadmap success with ${modelName}`);
-      return result;
+
+      return response;
     } catch (err) {
       const isRetryable =
         err.status === 503 ||
@@ -29,12 +41,17 @@ async function generateWithRetry(prompt, maxRetries = 4) {
 
       const isLast = attempt === maxRetries - 1;
 
-      console.error(`Roadmap attempt ${attempt + 1} failed (${modelName}): ${err.message}`);
+      console.error(
+        `Roadmap attempt ${attempt + 1} failed (${modelName}): ${err.message}`
+      );
 
       if (isRetryable && !isLast) {
-        const waitMs = 4000 * (attempt + 1); // 4s, 8s, 12s
+        const waitMs = 4000 * (attempt + 1);
+
         console.log(`Waiting ${waitMs / 1000}s before retry...`);
+
         await new Promise((r) => setTimeout(r, waitMs));
+
         continue;
       }
 
@@ -54,14 +71,8 @@ export async function generateRoadmap(req, res) {
       });
     }
 
-    if (!process.env.GEMINI_API_KEY) {
-      return res.status(500).json({
-        success: false,
-        message: "Gemini API key is not configured on the server.",
-      });
-    }
-
     const limitedSkills = skillGaps.slice(0, 4);
+
     const skillList = limitedSkills.join(", ");
 
     const prompt = `
@@ -101,35 +112,18 @@ JSON format:
     "Tip 3"
   ]
 }
-
-Create a realistic and actionable roadmap for Indonesian university students.
 `.trim();
 
-    const result = await generateWithRetry(prompt);
-    const rawText = result.response.text();
+    const response = await generateWithRetry(prompt);
 
-    if (!rawText) {
-      return res.status(500).json({
-        success: false,
-        message: "AI did not return any response.",
-      });
-    }
+    const rawText = response.text;
 
     const cleanText = rawText
       .replace(/```json\n?/g, "")
       .replace(/```\n?/g, "")
       .trim();
 
-    let roadmap;
-    try {
-      roadmap = JSON.parse(cleanText);
-    } catch (parseError) {
-      console.error("JSON Parse Error:", parseError);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to parse AI response JSON.",
-      });
-    }
+    const roadmap = JSON.parse(cleanText);
 
     return res.status(200).json({
       success: true,
@@ -137,24 +131,12 @@ Create a realistic and actionable roadmap for Indonesian university students.
       roadmap,
     });
   } catch (error) {
-    console.error("Gemini API Error:", error);
-
-    const isOverloaded =
-      error.status === 503 ||
-      error.status === 429 ||
-      error.message?.includes("UNAVAILABLE") ||
-      error.message?.includes("RESOURCE_EXHAUSTED");
-
-    if (isOverloaded) {
-      return res.status(503).json({
-        success: false,
-        message: "AI server is currently busy. Please try again in a few moments.",
-      });
-    }
+    console.error("===== ROADMAP ERROR =====");
+    console.error(error);
 
     return res.status(500).json({
       success: false,
-      message: error.message || "An unexpected server error occurred.",
+      message: error.message || "Server error",
     });
   }
 }
