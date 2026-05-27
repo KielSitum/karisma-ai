@@ -7,5 +7,5 @@ export default function registerRoutes(app) {
   app.use('/api/auth',    authRoutes);
   app.use('/api/cv',      cvRoutes);
   app.use('/api/jobs',    jobRoutes);
-  app.use('/api/roadmap', roadmapRoute);   // ← Personalized Learning Roadmap (Gemini AI)
+  app.use('/roadmap', roadmapRoute);   // ← Personalized Learning Roadmap (Gemini AI)
 }
