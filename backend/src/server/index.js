@@ -1,6 +1,6 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
+import express        from 'express';
+import cors           from 'cors';
+import dotenv         from 'dotenv';
 import registerRoutes from '../routes/index.js';
 
 dotenv.config();
@@ -12,12 +12,12 @@ const corsOptions = {
   origin: [
     "http://localhost:5173",
     "https://karisma-ai.vercel.app",
-    "https://karisma-ai.site"
+    "https://karisma-ai.site",
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
@@ -35,7 +35,7 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// ── Routes ─────────────────────────────────────────────────────────────────────
+// ── Routes (termasuk /api/roadmap) ─────────────────────────────────────────────
 registerRoutes(app);
 
 // ── Health check ───────────────────────────────────────────────────────────────
