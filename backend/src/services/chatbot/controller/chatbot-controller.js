@@ -1,6 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
 
 const SYSTEM_INSTRUCTION = `You are Karisma Assistant, a friendly and helpful AI career assistant.
 
@@ -17,9 +19,8 @@ Keep answers concise and direct unless a detailed explanation is necessary.
 Do not answer questions unrelated to careers, education, jobs, or self-development.`;
 
 const MODELS = [
-  "gemini-1.5-flash-8b",  // paling ringan, fallback utama
-  "gemini-1.5-flash",
   "gemini-2.5-flash",
+  "gemini-2.0-flash",
 ];
 
 async function chatWithRetry(contents, maxRetries = 4) {
@@ -27,7 +28,9 @@ async function chatWithRetry(contents, maxRetries = 4) {
     const modelName = MODELS[attempt % MODELS.length];
 
     try {
-      console.log(`Chatbot attempt ${attempt + 1}/${maxRetries} using ${modelName}...`);
+      console.log(
+        `Chatbot attempt ${attempt + 1}/${maxRetries} using ${modelName}`
+      );
 
       const response = await ai.models.generateContent({
         model: modelName,
@@ -40,24 +43,31 @@ async function chatWithRetry(contents, maxRetries = 4) {
       });
 
       console.log(`Chatbot success with ${modelName}`);
+
       return response;
     } catch (err) {
       const isRetryable =
-        err.status === 503 ||
-        err.status === 429 ||
-        err.message?.includes("503") ||
-        err.message?.includes("429") ||
-        err.message?.includes("UNAVAILABLE") ||
-        err.message?.includes("RESOURCE_EXHAUSTED");
+        err?.status === 503 ||
+        err?.status === 429 ||
+        err?.message?.includes("503") ||
+        err?.message?.includes("429") ||
+        err?.message?.includes("UNAVAILABLE") ||
+        err?.message?.includes("RESOURCE_EXHAUSTED");
 
       const isLast = attempt === maxRetries - 1;
 
-      console.error(`Chatbot attempt ${attempt + 1} failed (${modelName}): ${err.message}`);
+      console.error(
+        `Chatbot attempt ${attempt + 1} failed (${modelName}):`,
+        err.message
+      );
 
       if (isRetryable && !isLast) {
-        const waitMs = 4000 * (attempt + 1); // 4s, 8s, 12s
+        const waitMs = 4000 * (attempt + 1);
+
         console.log(`Waiting ${waitMs / 1000}s before retry...`);
+
         await new Promise((r) => setTimeout(r, waitMs));
+
         continue;
       }
 
@@ -70,7 +80,7 @@ export async function chat(req, res) {
   try {
     const { message, history = [] } = req.body;
 
-    if (!message || typeof message !== "string" || message.trim() === "") {
+    if (!message || typeof message !== "string") {
       return res.status(400).json({
         success: false,
         message: "Message cannot be empty.",
@@ -90,24 +100,32 @@ export async function chat(req, res) {
 
     const response = await chatWithRetry(contents);
 
+    console.log("CHATBOT RESPONSE:");
+    console.dir(response, { depth: null });
+
+    const reply =
+      response?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "Sorry, I could not generate a response.";
+
     return res.status(200).json({
       success: true,
-      reply: response.text,
+      reply,
     });
   } catch (error) {
     console.error("===== CHATBOT ERROR =====");
     console.error(error);
 
     const isOverloaded =
-      error.status === 503 ||
-      error.status === 429 ||
-      error.message?.includes("UNAVAILABLE") ||
-      error.message?.includes("RESOURCE_EXHAUSTED");
+      error?.status === 503 ||
+      error?.status === 429 ||
+      error?.message?.includes("UNAVAILABLE") ||
+      error?.message?.includes("RESOURCE_EXHAUSTED");
 
     if (isOverloaded) {
       return res.status(503).json({
         success: false,
-        message: "AI server is currently busy. Please try again in a few moments.",
+        message:
+          "AI server is currently busy. Please try again in a few moments.",
       });
     }
 
