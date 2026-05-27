@@ -75,47 +75,45 @@ export async function generateRoadmap(req, res) {
     const skillList = limitedSkills.join(", ");
 
     const prompt = `
-You are an experienced career mentor and professional learning advisor.
+Return ONLY valid JSON.
 
-Create a practical and beginner-friendly 4-week learning roadmap for these skills:
+Create a practical and detailed 4-week learning roadmap for a beginner who wants to improve these skills:
 
 ${skillList}
 
 Requirements:
+- Return valid JSON only
+- Do not use markdown
+- Do not use backticks
+- Do not add explanations outside JSON
 - Write everything in English
-- Make the roadmap realistic and actionable
-- Include weekly goals
-- Include learning activities
-- Include mini projects or practice sessions
-- Include beginner-friendly resources
+- Keep the roadmap clear and beginner-friendly
+- Make activities practical and actionable
+- Each week must have:
+  - 1 learning theme
+  - 2 tasks
+- Each activity should be 1-2 short sentences only
+- Avoid special characters and unnecessary symbols
+- Use plain text only
 
-Return ONLY valid JSON using this structure:
-
+JSON format:
 {
   "summary": "Short motivational summary",
   "weeks": [
     {
       "week": 1,
       "theme": "Week theme",
-      "goals": [
-        "Goal 1",
-        "Goal 2",
-        "Goal 3"
-      ],
       "tasks": [
         {
-          "day": "Monday",
-          "activity": "Learning activity",
-          "skill": "Skill being learned",
-          "resources": "Learning resources"
+          "day": "Monday - Wednesday",
+          "activity": "Learning activity"
+        },
+        {
+          "day": "Thursday - Sunday",
+          "activity": "Practice or mini project"
         }
       ]
     }
-  ],
-  "tips": [
-    "Tip 1",
-    "Tip 2",
-    "Tip 3"
   ]
 }
 `.trim();
