@@ -21,8 +21,10 @@ import jwt from "jsonwebtoken";
 import { supabase } from '../../../config/supabase.js';
 import multer from 'multer';
 import crypto from 'crypto';
-import nodemailer from 'nodemailer';
 import bcrypt from 'bcryptjs';
+import { Resend } from 'resend'; // ✅ ganti nodemailer
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Multer untuk avatar (image only, max 2MB)
 const avatarUpload = multer({
@@ -233,16 +235,9 @@ router.post('/forgot-password', async (req, res) => {
 
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: `"Karisma AI" <${process.env.EMAIL_USER}>`,
+    // ✅ Kirim email via Resend (HTTPS, tidak kena blokir Railway)
+    const { error: emailError } = await resend.emails.send({
+      from: `Karisma AI <noreply@karisma-ai.site>`, // ganti ke domain kamu yang sudah diverifikasi di Resend
       to: user.email,
       subject: 'Reset Your Karisma AI Password',
       html: `
@@ -262,6 +257,11 @@ router.post('/forgot-password', async (req, res) => {
         </div>
       `,
     });
+
+    if (emailError) {
+      console.error('Resend error:', emailError);
+      return res.status(500).json({ error: 'Failed to send email. Please try again.' });
+    }
 
     res.json({ success: true, message: 'If email is registered, a reset link will be sent.' });
   } catch (err) {
