@@ -29,6 +29,7 @@
     "nodemailer": "^8.0.9",
     "pdf-parse": "^1.1.1",
     "pg": "^8.13.3",
+    "resend": "^6.12.4",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
