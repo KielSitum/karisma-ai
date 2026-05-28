@@ -9,6 +9,7 @@ import UploadCV  from './pages/UploadCV';
 import CVHistory from './pages/CVHistory';
 import ProfileSettings from './pages/ProfileSettings';
 import CVDetailAnalysis from './pages/CVDetailAnalysis';
+import ResetPassword    from './pages/ResetPassword';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -27,6 +28,7 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
         <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
+        <Route path="/reset-password"  element={<ResetPassword />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/upload-cv" element={<ProtectedRoute><UploadCV /></ProtectedRoute>} />
         <Route path="/cv-history" element={<ProtectedRoute><CVHistory /></ProtectedRoute>} />
