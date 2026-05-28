@@ -8,6 +8,7 @@ import {
   updateProfile,
   changePassword,
   deleteAccount,
+  sendVerificationEmail,
 } from '../controller/auth-controller.js';
 import {
   registerValidation,
@@ -22,11 +23,10 @@ import { supabase } from '../../../config/supabase.js';
 import multer from 'multer';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import { Resend } from 'resend'; // ✅ ganti nodemailer
+import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Multer untuk avatar (image only, max 2MB)
 const avatarUpload = multer({
   storage: multer.memoryStorage(),
   fileFilter: (req, file, cb) => {
@@ -38,7 +38,6 @@ const avatarUpload = multer({
 
 const router = Router();
 
-// ── Validation middleware helper ──────────────────────────────────────────────
 function validate(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -65,14 +64,65 @@ router.patch('/password', authMiddleware, passwordValidation, validate, changePa
 // ── DELETE /auth/account ──────────────────────────────────────────────────────
 router.delete('/account', authMiddleware, deleteAccount);
 
+// ── GET /auth/verify-email ────────────────────────────────────────────────────
+router.get('/verify-email', async (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token) return res.status(400).json({ error: 'Token is required' });
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+      return res.status(400).json({ error: 'Verification link is invalid or has expired.' });
+    }
+
+    if (decoded.purpose !== 'email-verification') {
+      return res.status(400).json({ error: 'Invalid token.' });
+    }
+
+    const { error } = await supabase
+      .from('Users')
+      .update({ is_verified: true, updated_at: new Date().toISOString() })
+      .eq('id', decoded.userId);
+
+    if (error) return res.status(500).json({ error: 'Failed to verify email.' });
+
+    res.json({ success: true, message: 'Email verified successfully. You can now log in.' });
+  } catch (err) {
+    console.error('Verify email error:', err);
+    res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
+
+// ── POST /auth/resend-verification ───────────────────────────────────────────
+router.post('/resend-verification', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    const { data: user } = await supabase
+      .from('Users')
+      .select('id, full_name, email, is_verified')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (!user) return res.json({ success: true });
+    if (user.is_verified) return res.status(400).json({ error: 'Email is already verified.' });
+
+    await sendVerificationEmail(user);
+    res.json({ success: true, message: 'Verification email resent.' });
+  } catch (err) {
+    console.error('Resend verification error:', err);
+    res.status(500).json({ error: 'Failed to resend email.' });
+  }
+});
+
 // ── POST /auth/google ─────────────────────────────────────────────────────────
 router.post("/google", async (req, res) => {
   try {
     const { token } = req.body;
-
-    if (!token) {
-      return res.status(400).json({ success: false, message: "Token is required" });
-    }
+    if (!token) return res.status(400).json({ success: false, message: "Token is required" });
 
     const decodedToken = await admin.auth().verifyIdToken(token);
     const { uid, email, name, picture } = decodedToken;
@@ -88,9 +138,7 @@ router.post("/google", async (req, res) => {
         success: false,
         code: 'USER_NOT_REGISTERED',
         message: 'Email not registered. Please register first.',
-        email,
-        name,
-        picture,
+        email, name, picture,
       });
     }
 
@@ -122,9 +170,7 @@ router.post("/google", async (req, res) => {
 // ── POST /auth/avatar ─────────────────────────────────────────────────────────
 router.post('/avatar', authMiddleware, avatarUpload.single('avatar'), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
     const userId = req.user.id;
     const ext = req.file.mimetype.split('/')[1].replace('jpeg', 'jpg');
@@ -132,10 +178,7 @@ router.post('/avatar', authMiddleware, avatarUpload.single('avatar'), async (req
 
     const { error: uploadError } = await supabase.storage
       .from(process.env.CV_AVATAR_BUCKET)
-      .upload(fileName, req.file.buffer, {
-        contentType: req.file.mimetype,
-        upsert: true,
-      });
+      .upload(fileName, req.file.buffer, { contentType: req.file.mimetype, upsert: true });
 
     if (uploadError) {
       console.error('Supabase storage error:', uploadError);
@@ -155,9 +198,7 @@ router.post('/avatar', authMiddleware, avatarUpload.single('avatar'), async (req
       .select('id, full_name, email, avatar_url, created_at, updated_at')
       .single();
 
-    if (updateError) {
-      return res.status(500).json({ error: 'Failed to update avatar URL' });
-    }
+    if (updateError) return res.status(500).json({ error: 'Failed to update avatar URL' });
 
     res.json({ avatar_url: cleanUrl, user });
   } catch (err) {
@@ -179,7 +220,7 @@ router.post("/register-google", async (req, res) => {
       .from('Users').select('id').eq('email', email).maybeSingle();
 
     if (existingUser) {
-      return res.status(409).json({ success: false, message: 'Email sudah terdaftar.' });
+      return res.status(409).json({ success: false, message: 'Email already registered.' });
     }
 
     const { data: newUser, error } = await supabase
@@ -189,6 +230,7 @@ router.post("/register-google", async (req, res) => {
         email,
         password: crypto.randomBytes(32).toString('hex'),
         avatar_url: picture || null,
+        is_verified: true, // Google email sudah terverifikasi
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -217,12 +259,8 @@ router.post('/forgot-password', async (req, res) => {
     if (!email) return res.status(400).json({ error: 'Email is required' });
 
     const { data: user } = await supabase
-      .from('Users')
-      .select('id, full_name, email')
-      .eq('email', email)
-      .maybeSingle();
+      .from('Users').select('id, full_name, email').eq('email', email).maybeSingle();
 
-    // Selalu return 200 supaya tidak leak info user ada/tidak
     if (!user) {
       return res.json({ success: true, message: 'If email is registered, a reset link will be sent.' });
     }
@@ -235,9 +273,8 @@ router.post('/forgot-password', async (req, res) => {
 
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
-    // ✅ Kirim email via Resend (HTTPS, tidak kena blokir Railway)
     const { error: emailError } = await resend.emails.send({
-      from: `Karisma AI <noreply@karisma-ai.site>`, // ganti ke domain kamu yang sudah diverifikasi di Resend
+      from: `Karisma AI <noreply@karisma-ai.site>`,
       to: user.email,
       subject: 'Reset Your Karisma AI Password',
       html: `

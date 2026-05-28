@@ -1,15 +1,16 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AuthProvider, { useAuth } from './contexts/AuthContext';
 import { CVProvider } from './contexts/CVContext';
-import Home      from './pages/Home';
-import Login     from './pages/Login';
-import Register  from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import UploadCV  from './pages/UploadCV';
-import CVHistory from './pages/CVHistory';
-import ProfileSettings from './pages/ProfileSettings';
+import Home             from './pages/Home';
+import Login            from './pages/Login';
+import Register         from './pages/Register';
+import Dashboard        from './pages/Dashboard';
+import UploadCV         from './pages/UploadCV';
+import CVHistory        from './pages/CVHistory';
+import ProfileSettings  from './pages/ProfileSettings';
 import CVDetailAnalysis from './pages/CVDetailAnalysis';
 import ResetPassword    from './pages/ResetPassword';
+import VerifyEmail      from './pages/VerifyEmail';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -25,16 +26,17 @@ function AppRoutes() {
   return (
     <CVProvider>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
-        <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
+        <Route path="/"                element={<Home />} />
+        <Route path="/login"           element={<GuestRoute><Login /></GuestRoute>} />
+        <Route path="/register"        element={<GuestRoute><Register /></GuestRoute>} />
         <Route path="/reset-password"  element={<ResetPassword />} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/upload-cv" element={<ProtectedRoute><UploadCV /></ProtectedRoute>} />
-        <Route path="/cv-history" element={<ProtectedRoute><CVHistory /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
-        <Route path="/cv-detail/:id" element={<ProtectedRoute><CVDetailAnalysis /></ProtectedRoute>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/verify-email"     element={<VerifyEmail />} />
+        <Route path="/dashboard"       element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/upload-cv"       element={<ProtectedRoute><UploadCV /></ProtectedRoute>} />
+        <Route path="/cv-history"      element={<ProtectedRoute><CVHistory /></ProtectedRoute>} />
+        <Route path="/profile"         element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
+        <Route path="/cv-detail/:id"   element={<ProtectedRoute><CVDetailAnalysis /></ProtectedRoute>} />
+        <Route path="*"                element={<Navigate to="/" replace />} />
       </Routes>
     </CVProvider>
   );

@@ -1,36 +1,66 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { Resend } from 'resend';
 import { supabase } from '../../../config/supabase.js';
 
-// ── Helper: sign JWT ──────────────────────────────────────────────────────────
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 function signToken(userId) {
   return jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 }
 
+// ── Helper: send verification email ──────────────────────────────────────────
+export async function sendVerificationEmail(user) {
+  const verifyToken = jwt.sign(
+    { userId: user.id, purpose: 'email-verification' },
+    process.env.JWT_SECRET,
+    { expiresIn: '24h' }
+  );
+
+  const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`;
+
+  const { error } = await resend.emails.send({
+    from: `Karisma AI <noreply@karisma-ai.site>`,
+    to: user.email,
+    subject: 'Verify Your Karisma AI Account',
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#F4F5FB;border-radius:16px">
+        <img src="${process.env.FRONTEND_URL}/logo-karisma.png" alt="Karisma AI" style="height:32px;margin-bottom:24px" />
+        <h2 style="color:#0F1226;font-size:20px;font-weight:700;margin:0 0 8px">Verify Your Email Address</h2>
+        <p style="color:#5A5F7D;font-size:14px;margin:0 0 24px;line-height:1.6">
+          Hi ${user.full_name}, welcome to Karisma AI! Click the button below to verify your email address and activate your account. This link is valid for <strong>24 hours</strong>.
+        </p>
+        <a href="${verifyUrl}" style="display:inline-block;background:#5B4FE8;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">
+          Verify My Email
+        </a>
+        <p style="color:#9EA3BC;font-size:12px;margin:24px 0 0;line-height:1.6">
+          If you didn't create an account with Karisma AI, you can safely ignore this email.
+        </p>
+      </div>
+    `,
+  });
+
+  if (error) throw new Error('Failed to send verification email');
+}
+
 // ── POST /auth/register ───────────────────────────────────────────────────────
 export async function register(req, res) {
   const { full_name, email, password } = req.body;
 
-  // Check if email already exists
   const { data: existing } = await supabase
-    .from('Users')
-    .select('id')
-    .eq('email', email)
-    .maybeSingle();
+    .from('Users').select('id').eq('email', email).maybeSingle();
 
   if (existing) {
     return res.status(409).json({ error: 'Email already registered' });
   }
 
-  // Hash password
   const hashedPassword = await bcrypt.hash(password, 12);
 
-  // Create user
   const { data: user, error } = await supabase
     .from('Users')
-    .insert({ full_name, email, password: hashedPassword })
+    .insert({ full_name, email, password: hashedPassword, is_verified: false })
     .select('id, full_name, email, avatar_url, created_at')
     .single();
 
@@ -39,35 +69,49 @@ export async function register(req, res) {
     return res.status(500).json({ error: 'Failed to create account' });
   }
 
-  const token = signToken(user.id);
-  const { password: _, ...safeUser } = user;
+  try {
+    await sendVerificationEmail(user);
+  } catch (emailErr) {
+    console.error('Failed to send verification email:', emailErr);
+  }
 
-  res.status(201).json({ token, user: safeUser });
+  res.status(201).json({
+    success: true,
+    requiresVerification: true,
+    email: user.email,
+    message: 'Account created. Please check your email to verify your account.',
+  });
 }
 
 // ── POST /auth/login ──────────────────────────────────────────────────────────
 export async function login(req, res) {
   const { email, password } = req.body;
 
-  // Find user (include password for comparison)
   const { data: user, error } = await supabase
     .from('Users')
-    .select('id, full_name, email, password, avatar_url, created_at, updated_at')
+    .select('id, full_name, email, password, avatar_url, is_verified, created_at, updated_at')
     .eq('email', email)
     .maybeSingle();
 
   if (error || !user) {
-    return res.status(401).json({ error: 'Email atau password salah.' });
+    return res.status(401).json({ error: 'Invalid email or password.' });
   }
 
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) {
-    return res.status(401).json({ error: 'Email atau password salah.' });
+    return res.status(401).json({ error: 'Invalid email or password.' });
+  }
+
+  if (!user.is_verified) {
+    return res.status(403).json({
+      error: 'Please verify your email before logging in.',
+      code: 'EMAIL_NOT_VERIFIED',
+      email: user.email,
+    });
   }
 
   const token = signToken(user.id);
   const { password: _, ...safeUser } = user;
-
   res.json({ token, user: safeUser });
 }
 
@@ -108,12 +152,8 @@ export async function updateProfile(req, res) {
 export async function changePassword(req, res) {
   const { current_password, new_password } = req.body;
 
-  // Fetch current hashed password
   const { data: user, error: fetchError } = await supabase
-    .from('Users')
-    .select('password')
-    .eq('id', req.user.id)
-    .single();
+    .from('Users').select('password').eq('id', req.user.id).single();
 
   if (fetchError || !user) {
     return res.status(500).json({ error: 'Failed to verify current password' });
@@ -142,20 +182,13 @@ export async function changePassword(req, res) {
 export async function deleteAccount(req, res) {
   const userId = req.user.id;
 
-  // Delete in order: Career_Matches → CV_Analysis → CV_uploads → Users
   const { data: cvUploads } = await supabase
-    .from('CV_uploads')
-    .select('id')
-    .eq('users_id', userId);
+    .from('CV_uploads').select('id').eq('users_id', userId);
 
   if (cvUploads?.length) {
     const cvIds = cvUploads.map(cv => cv.id);
-
-    // Get CV_Analysis ids
     const { data: analyses } = await supabase
-      .from('CV_Analysis')
-      .select('id')
-      .in('CV_upload_id', cvIds);
+      .from('CV_Analysis').select('id').in('CV_upload_id', cvIds);
 
     if (analyses?.length) {
       const analysisIds = analyses.map(a => a.id);

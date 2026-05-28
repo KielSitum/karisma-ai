@@ -27,6 +27,11 @@ export const up = (pgm) => {
     avatar_url: {
       type: 'varchar(500)',
     },
+    is_verified: {          
+      type: 'boolean',
+      notNull: true,
+      default: false,
+    },
     created_at: {
       type: 'timestamptz',
       default: pgm.func('NOW()'),
