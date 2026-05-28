@@ -20,33 +20,33 @@ export default function Dashboard() {
   const firstName = user?.full_name?.split(' ')[0] || 'User';
   const greeting  = hasCVs ? `Welcome back, ${firstName}!` : `Welcome, ${firstName}!`;
 
+  // Semua stat card seragam: bg-[#F0EFFE] text-[#5B4FE8]
   const statCards = [
-    { icon: IcoBriefcase, color: 'bg-[#EEEDFE] text-primary',     value: stats.careerMatches, label: 'CAREER MATCHES' },
-    { icon: IcoSparkle,   color: 'bg-[#F3E8FF] text-purple-600',  value: stats.totalSkills,   label: 'TOTAL SKILLS IDENTIFIED' },
-    { icon: IcoFile,      color: 'bg-[#DBEAFE] text-blue-600',    value: stats.cvsUploaded,   label: 'CVS UPLOADED' },
-    { icon: IcoCalendar,  color: 'bg-[#E0F2FE] text-sky-600',     value: stats.lastUploadDate ? fmtDateShort(stats.lastUploadDate) : '—', label: 'LAST UPLOAD DATE' },
+    { icon: IcoBriefcase, value: stats.careerMatches,  label: 'CAREER MATCHES' },
+    { icon: IcoSparkle,   value: stats.totalSkills,    label: 'TOTAL SKILLS IDENTIFIED' },
+    { icon: IcoFile,      value: stats.cvsUploaded,    label: 'CVS UPLOADED' },
+    { icon: IcoCalendar,  value: stats.lastUploadDate ? fmtDateShort(stats.lastUploadDate) : '—', label: 'LAST UPLOAD DATE' },
   ];
 
-  // Spinner saat loading awal dari API
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#F4F5FB]">
+      <div className="min-h-screen flex flex-col bg-[#F8F9FE]">
         <Navbar />
         <main className="flex-1 pt-24 flex items-center justify-center">
-          <div className="w-10 h-10 border-[3px] border-[#E8EAF2] border-t-primary rounded-full" style={{ animation: 'spin 0.8s linear infinite' }} />
+          <div className="w-10 h-10 border-[3px] border-[#E8EAF2] rounded-full" style={{ borderTopColor: '#5B4FE8', animation: 'spin 0.8s linear infinite' }} />
         </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F4F5FB]">
+    <div className="min-h-screen flex flex-col bg-[#F8F9FE]">
       <Navbar />
       <main className="flex-1 pt-24">
         <div className="max-w-[1140px] mx-auto px-6 py-10">
 
           <div className="mb-8 animate-fade-up">
-            <h1 className="font-display font-extrabold text-[clamp(28px,4vw,42px)] text-[#0F1226] mb-1 animate-fade-up">{greeting}</h1>
+            <h1 className="font-display font-extrabold text-[clamp(28px,4vw,42px)] text-[#0F1226] mb-1">{greeting}</h1>
             <p className="text-[#5A5F7D] text-base">Your career journey is looking promising today.</p>
           </div>
 
@@ -66,10 +66,11 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* Stat cards — semua seragam #F0EFFE / #5B4FE8 */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 animate-fade-up">
             {statCards.map((c, i) => (
               <div key={i} className="card-base p-5">
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 ${c.color}`}>
+                <div className="w-11 h-11 rounded-xl bg-[#F0EFFE] text-[#5B4FE8] flex items-center justify-center mb-4">
                   {c.icon}
                 </div>
                 <p className="font-display font-extrabold text-[clamp(22px,3vw,34px)] text-[#0F1226] leading-none mb-1.5">
@@ -93,26 +94,36 @@ export default function Dashboard() {
                 <h2 className="font-display font-bold text-2xl text-[#0F1226] mb-5">Top Career Matches</h2>
                 <div className="flex flex-col gap-3">
                   {topAllMatches.map((m, i) => {
-                    const badgeCls = m.match_percentage >= 80 ? 'bg-[#DCFCE7] text-[#15803D]' :
-                                     m.match_percentage >= 60 ? 'bg-[#FEF3C7] text-[#B45309]' :
-                                                                'bg-[#FEE2E2] text-[#DC2626]';
+                    const badgeCls = m.match_percentage >= 80 ? 'bg-[#DCFCE7] text-[#15803D]'
+                                   : m.match_percentage >= 60 ? 'bg-[#FEF3C7] text-[#B45309]'
+                                   : 'bg-[#FEE2E2] text-[#DC2626]';
                     return (
-                      <div key={i} className="card-base px-7 py-6 flex items-center justify-between">
-                        <div>
-                          <p className="font-display font-bold text-[#0F1226] text-lg mb-2">{m.predicted_career}</p>
-                          <div className="flex items-center gap-3">
-                            <span className={`text-xs font-bold px-3 py-1 rounded-full ${badgeCls}`}>
-                              {m.match_percentage}% MATCH
-                            </span>
-                            <span className="text-xs font-medium text-[#9EA3BC] flex items-center gap-1.5">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                              {m.cvFilename}
-                            </span>
+                      <div key={i} className="card-base px-4 md:px-7 py-5 md:py-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-display font-bold text-[#0F1226] text-base md:text-lg mb-2 break-words">
+                              {m.predicted_career}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className={`text-xs font-bold px-3 py-1 rounded-full ${badgeCls}`}>
+                                {m.match_percentage}% MATCH
+                              </span>
+                              <span className="text-xs font-medium text-[#9EA3BC] flex items-center gap-1.5 min-w-0">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0">
+                                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                                  <polyline points="14 2 14 8 20 8"/>
+                                </svg>
+                                <span className="truncate">{m.cvFilename}</span>
+                              </span>
+                            </div>
                           </div>
+                          <Link
+                            to={`/cv-detail/${m.cvId}`}
+                            className="text-sm font-semibold text-[#5B4FE8] hover:text-[#4a3fd1] transition-colors self-start sm:self-center"
+                          >
+                            View Details →
+                          </Link>
                         </div>
-                        <Link to={`/cv-detail/${m.cvId}`} className="text-sm font-semibold text-primary hover:text-primary-dark transition-colors">
-                          View Details →
-                        </Link>
                       </div>
                     );
                   })}

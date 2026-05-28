@@ -21,6 +21,8 @@ import jwt from "jsonwebtoken";
 import { supabase } from '../../../config/supabase.js';
 import multer from 'multer';
 import crypto from 'crypto';
+import nodemailer from 'nodemailer';
+import bcrypt from 'bcryptjs';
 
 // Multer untuk avatar (image only, max 2MB)
 const avatarUpload = multer({
@@ -61,6 +63,7 @@ router.patch('/password', authMiddleware, passwordValidation, validate, changePa
 // ── DELETE /auth/account ──────────────────────────────────────────────────────
 router.delete('/account', authMiddleware, deleteAccount);
 
+// ── POST /auth/google ─────────────────────────────────────────────────────────
 router.post("/google", async (req, res) => {
   try {
     const { token } = req.body;
@@ -69,23 +72,20 @@ router.post("/google", async (req, res) => {
       return res.status(400).json({ success: false, message: "Token is required" });
     }
 
-    // Verify Firebase ID token
     const decodedToken = await admin.auth().verifyIdToken(token);
     const { uid, email, name, picture } = decodedToken;
 
-    // Cek apakah user sudah ada di database (berdasarkan email)
     const { data: existingUser } = await supabase
       .from('Users')
       .select('id, full_name, email, avatar_url, created_at, updated_at')
       .eq('email', email)
       .maybeSingle();
 
-    // Jika belum terdaftar → tolak, suruh register dulu
     if (!existingUser) {
       return res.status(404).json({
         success: false,
         code: 'USER_NOT_REGISTERED',
-        message: 'Akun Google ini belum terdaftar. Silakan daftar terlebih dahulu.',
+        message: 'Email not registered. Please register first.',
         email,
         name,
         picture,
@@ -94,7 +94,6 @@ router.post("/google", async (req, res) => {
 
     let user = existingUser;
 
-    // Update avatar jika berubah
     if (picture && !user.avatar_url) {
       const { data: updatedUser } = await supabase
         .from('Users')
@@ -105,27 +104,18 @@ router.post("/google", async (req, res) => {
       if (updatedUser) user = updatedUser;
     }
 
-    // Sign JWT dengan userId (konsisten dengan login biasa)
     const appToken = jwt.sign(
       { userId: user.id },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
     );
 
-    res.json({
-      success: true,
-      token: appToken,
-      user,
-    });
+    res.json({ success: true, token: appToken, user });
   } catch (err) {
     console.error('Google auth error:', err);
-    res.status(401).json({
-      success: false,
-      message: "Invalid Firebase token",
-    });
+    res.status(401).json({ success: false, message: "Invalid Firebase token" });
   }
 });
-
 
 // ── POST /auth/avatar ─────────────────────────────────────────────────────────
 router.post('/avatar', authMiddleware, avatarUpload.single('avatar'), async (req, res) => {
@@ -138,12 +128,11 @@ router.post('/avatar', authMiddleware, avatarUpload.single('avatar'), async (req
     const ext = req.file.mimetype.split('/')[1].replace('jpeg', 'jpg');
     const fileName = `${process.env.CV_AVATAR_BUCKET}/${userId}.${ext}`;
 
-    // Upload ke Supabase Storage bucket "avatars"
     const { error: uploadError } = await supabase.storage
       .from(process.env.CV_AVATAR_BUCKET)
       .upload(fileName, req.file.buffer, {
         contentType: req.file.mimetype,
-        upsert: true, // overwrite jika sudah ada
+        upsert: true,
       });
 
     if (uploadError) {
@@ -151,14 +140,12 @@ router.post('/avatar', authMiddleware, avatarUpload.single('avatar'), async (req
       return res.status(500).json({ error: 'Failed to upload avatar' });
     }
 
-    // Ambil public URL
     const { data: { publicUrl } } = supabase.storage
       .from(process.env.CV_AVATAR_BUCKET)
       .getPublicUrl(fileName);
 
     const cleanUrl = publicUrl.split('?')[0];
 
-    // Simpan URL ke tabel Users
     const { data: user, error: updateError } = await supabase
       .from('Users')
       .update({ avatar_url: cleanUrl, updated_at: new Date().toISOString() })
@@ -177,6 +164,7 @@ router.post('/avatar', authMiddleware, avatarUpload.single('avatar'), async (req
   }
 });
 
+// ── POST /auth/register-google ────────────────────────────────────────────────
 router.post("/register-google", async (req, res) => {
   try {
     const { token } = req.body;
@@ -184,11 +172,9 @@ router.post("/register-google", async (req, res) => {
 
     const decodedToken = await admin.auth().verifyIdToken(token);
     const { email, name, picture } = decodedToken;
-    console.log('1. Decoded:', { email, name });
 
     const { data: existingUser } = await supabase
       .from('Users').select('id').eq('email', email).maybeSingle();
-    console.log('2. Existing user:', existingUser);
 
     if (existingUser) {
       return res.status(409).json({ success: false, message: 'Email sudah terdaftar.' });
@@ -199,14 +185,13 @@ router.post("/register-google", async (req, res) => {
       .insert({
         full_name: name,
         email,
-        password: crypto.randomBytes(32).toString('hex'), // ← random, tidak bisa dipakai login
+        password: crypto.randomBytes(32).toString('hex'),
         avatar_url: picture || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .select('id, full_name, email, avatar_url, created_at, updated_at')
       .single();
-    console.log('3. Insert result:', { newUser, error });
 
     if (error) throw error;
 
@@ -218,8 +203,104 @@ router.post("/register-google", async (req, res) => {
 
     res.status(201).json({ success: true, token: appToken, user: newUser });
   } catch (err) {
-    console.error('4. Error:', err.message);
-    res.status(500).json({ success: false, message: 'Gagal mendaftarkan akun.', detail: err.message });
+    console.error('Register Google error:', err.message);
+    res.status(500).json({ success: false, message: 'Failed to register account.', detail: err.message });
+  }
+});
+
+// ── POST /auth/forgot-password ────────────────────────────────────────────────
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    const { data: user } = await supabase
+      .from('Users')
+      .select('id, full_name, email')
+      .eq('email', email)
+      .maybeSingle();
+
+    // Selalu return 200 supaya tidak leak info user ada/tidak
+    if (!user) {
+      return res.json({ success: true, message: 'If email is registered, a reset link will be sent.' });
+    }
+
+    const resetToken = jwt.sign(
+      { userId: user.id, purpose: 'password-reset' },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"Karisma AI" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: 'Reset Your Karisma AI Password',
+      html: `
+        <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#F4F5FB;border-radius:16px">
+          <img src="${process.env.FRONTEND_URL}/logo-karisma.png" alt="Karisma AI" style="height:32px;margin-bottom:24px" />
+          <h2 style="color:#0F1226;font-size:20px;font-weight:700;margin:0 0 8px">Reset Your Password</h2>
+          <p style="color:#5A5F7D;font-size:14px;margin:0 0 24px;line-height:1.6">
+            Hi ${user.full_name}, we received a request to reset the password for your account.
+            Click the button below to create a new password. This link is valid for <strong>1 hour</strong>.
+          </p>
+          <a href="${resetUrl}" style="display:inline-block;background:#5B4FE8;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">
+            Reset My Password
+          </a>
+          <p style="color:#9EA3BC;font-size:12px;margin:24px 0 0;line-height:1.6">
+            If you did not request a password reset, you can safely ignore this email. Your account remains secure.
+          </p>
+        </div>
+      `,
+    });
+
+    res.json({ success: true, message: 'If email is registered, a reset link will be sent.' });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ error: 'Failed to send email. Please try again.' });
+  }
+});
+
+// ── POST /auth/reset-password ─────────────────────────────────────────────────
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) return res.status(400).json({ error: 'Token and password are required' });
+    if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+      return res.status(400).json({ error: 'Reset password link is not valid or has expired.' });
+    }
+
+    if (decoded.purpose !== 'password-reset') {
+      return res.status(400).json({ error: 'Token is not valid.' });
+    }
+
+    const hashed = await bcrypt.hash(password, 12);
+
+    const { error: updateError } = await supabase
+      .from('Users')
+      .update({ password: hashed, updated_at: new Date().toISOString() })
+      .eq('id', decoded.userId);
+
+    if (updateError) return res.status(500).json({ error: 'Failed to update password.' });
+
+    res.json({ success: true, message: 'Password successfully updated. Please login.' });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ error: 'An error occurred while resetting the password.' });
   }
 });
 
