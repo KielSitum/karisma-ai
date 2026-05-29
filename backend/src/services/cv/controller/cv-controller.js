@@ -186,19 +186,6 @@ export async function uploadCV(req, res) {
       aiSkills = aiResult.skills_extracted || [];
       aiCareers = aiResult.career_recommendations || [];
 
-      // Filter aiSkills against global Skills table
-      const { data: allSkillsData } = await supabase
-        .from("Skills")
-        .select("Skill_name");
-      if (allSkillsData) {
-        const allDbSkills = allSkillsData.map((s) =>
-          s.Skill_name.toLowerCase(),
-        );
-        aiSkills = aiSkills.filter((s) =>
-          allDbSkills.includes(s.toLowerCase()),
-        );
-      }
-
       aiStatus = "analyzed";
       console.log(
         `✅ AI selesai: ${aiSkills.length} skill, ${aiCareers.length} karir`,

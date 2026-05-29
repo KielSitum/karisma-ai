@@ -336,7 +336,7 @@ function JobCard({ icon, title, category }) {
                               to="/dashboard"
                               className="btn-primary px-8 py-3 text-[15px]"
                             >
-                              Go to Dashboard →
+                              Go to Dashboard
                             </Link>
 
                             <Link

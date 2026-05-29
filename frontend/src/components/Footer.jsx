@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="max-w-[1140px] mx-auto px-6 flex flex-wrap items-center gap-4">
         <div>
           <p className="font-display font-bold text-[15px] text-[#0F1226]">Karisma AI</p>
-          <p className="text-xs text-[#9EA3BC] mt-0.5">© 2026 Karisma AI. Empowering Indonesian Students.</p>
+          <p className="text-xs text-[#9EA3BC] mt-0.5">© 2026 Karisma AI  .</p>
         </div>
       </div>
     </footer>
