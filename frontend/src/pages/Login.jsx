@@ -164,7 +164,7 @@ function VerifyEmailPrompt({ email, onBack }) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function Login() {
-  const { login, register, loginWithGoogle } = useAuth();
+  const { login, register, loginWithGoogle, registerWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const [tab, setTab]               = useState('login');
@@ -221,14 +221,15 @@ export default function Login() {
   const handleGoogle = async () => {
     setError(''); setGoogleLoading(true);
     try {
-      await loginWithGoogle();
+      if (isRegister) {
+        await registerWithGoogle();
+      } else {
+        await loginWithGoogle();
+      }
       navigate('/dashboard');
     } catch (err) {
-      if (err.code === 'USER_NOT_REGISTERED') {
-        switchTab('register');
-        setName(err.googleName || '');
-        setEmail(err.googleEmail || '');
-        setError('Your Google account is not registered. Please complete registration below.');
+      if (err.code === 'EMAIL_ALREADY_REGISTERED' || err.message?.includes('already registered')) {
+        setError('Account with this email already exists. Please login instead.');
       } else if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
         setError(err.message || 'Google login failed. Please try again.');
       }
@@ -280,12 +281,24 @@ export default function Login() {
               {isRegister && <InputField label="Your Name" placeholder="Your full name" value={name} onChange={v => { setName(v); clear(); }} iconL={IcoUser}/>}
               <InputField label="Email Address" type="email" placeholder="youremail@mail.com" value={email} onChange={v => { setEmail(v); clear(); }} iconL={IcoMail}/>
               <InputField label="Password" placeholder="••••••••" value={pw} onChange={v => { setPw(v); clear(); }} iconL={IcoLock} showToggle showPw={showPw} onToggle={() => setShowPw(s => !s)}/>
+              {isRegister && (
+                <div className="flex flex-col gap-1.5 -mt-1">
+                  {[
+                    { ok: pw.length >= 8,   label: 'At least 8 characters' },
+                    { ok: /[A-Z]/.test(pw), label: 'Contains an uppercase letter' },
+                    { ok: /[0-9]/.test(pw), label: 'Contains a number' },
+                  ].map((hint, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${hint.ok && pw ? 'bg-[#5B4FE8]' : 'bg-[#E8EAF2]'}`}>
+                        {hint.ok && pw && <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                      </div>
+                      <span className={`text-xs transition-colors ${hint.ok && pw ? 'text-[#5B4FE8]' : 'text-[#9EA3BC]'}`}>{hint.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               {isRegister && <InputField label="Confirm Password" placeholder="••••••••" value={cpw} onChange={v => { setCpw(v); clear(); }} iconL={IcoLock} showToggle showPw={showCpw} onToggle={() => setShowCpw(s => !s)}/>}
               <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-sm text-[#5A5F7D] cursor-pointer">
-                  <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} className="h-4 w-4 accent-[#5B4FE8]"/>
-                  Stay Signed In
-                </label>
                 {!isRegister && (
                   <button type="button" onClick={() => setShowForgot(true)} className="text-sm font-semibold text-[#5B4FE8] hover:underline bg-transparent border-none cursor-pointer p-0">
                     Forgot password?

@@ -63,7 +63,7 @@ export default function CVHistory() {
 
           <div className="mb-8 animate-fade-up">
             <h1 className="font-display font-extrabold text-[clamp(26px,3.5vw,38px)] text-[#0F1226] mb-2">CV History</h1>
-            <p className="text-[#5A5F7D] text-sm max-w-[500px]">Track your career progress and review past analysis results to fine-tune your professional profile for the Indonesian job market.</p>
+            <p className="text-[#5A5F7D] text-sm max-w-[500px]">Track your career progress and review past analysis results to fine-tune your professional profile for the job market.</p>
           </div>
 
           {/* ── Stats ── */}

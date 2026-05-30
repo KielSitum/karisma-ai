@@ -164,24 +164,31 @@ function ChatbotPopup() {
       )}
 
   {/* FLOATING BUTTON */}
-  <button
-    onClick={() => setIsOpen((prev) => !prev)}
-    className={`fixed z-[9999] bottom-4 right-4 sm:bottom-6 sm:right-6 w-14 h-14 rounded-full shadow-xl hover:scale-110 active:scale-95 transition-all overflow-hidden border-2 border-[#808080] ${
-      isOpen ? 'hidden sm:flex' : 'flex'
-    }`}
-  >
-    {isOpen ? (
-      <div className="w-full h-full bg-white flex items-center justify-center">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="2.5">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </div>
-    ) : (
-      <div className="w-full h-full bg-white flex items-center justify-center">
-        <img src="/logo-karisma-2.png" alt="Karisma AI" className="w-10 h-10 object-contain" />
-      </div>
-    )}
-  </button>
+<button
+  onClick={() => setIsOpen((prev) => !prev)}
+  className={`fixed z-[9999] bottom-4 right-4 sm:bottom-6 sm:right-6 w-14 h-14 rounded-full shadow-xl active:scale-95 transition-all overflow-hidden border-2 group ${
+    isOpen ? 'hidden sm:flex' : 'flex'
+  }`}
+  style={{ animation: isOpen ? 'none' : 'floatBounce 2s ease-in-out infinite' }}
+>
+  {isOpen ? (
+      <div className="w-full h-full bg-[#5B4FE8] flex items-center justify-center">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+      <line x1="18" y1="6" x2="6" y2="18"/>
+      <line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  </div>
+  ) : (
+    <div className="w-full h-full bg-[#5B4FE8] flex items-center justify-center">
+      <img src="/Logo_chat.png" alt="Karisma AI" className="w-7 h-7 object-contain" />
+      {/* Tooltip */}
+      <span className="absolute bottom-16 right-0 bg-[#0F1226] text-white text-xs font-medium px-3 py-1.5 rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg">
+        Ask Karisma AI
+        <span className="absolute -bottom-1 right-4 w-2 h-2 bg-[#0F1226] rotate-45" />
+      </span>
+    </div>
+  )}
+</button>
     </>
   );
 }

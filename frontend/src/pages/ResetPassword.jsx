@@ -35,7 +35,7 @@ export default function ResetPassword() {
 
   useEffect(() => {
     if (!token) navigate('/login');
-  }, [token, navigate]);
+  }, [token, navigate])
 
   const handleSubmit = async () => {
     setError('');
@@ -87,9 +87,6 @@ export default function ResetPassword() {
           ) : (
             <>
               <div className="mb-6">
-                <div className="w-11 h-11 rounded-xl bg-primary-light border border-[#C7D2FE] flex items-center justify-center mb-4">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" strokeWidth="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                </div>
                 <h1 className="font-display font-bold text-2xl text-[#0F1226] mb-1">Create New Password</h1>
                 <p className="text-sm text-[#9EA3BC]">Enter your new password below.</p>
               </div>
@@ -140,10 +137,10 @@ export default function ResetPassword() {
                     { ok: /[0-9]/.test(pw),  label: 'Contains a number' },
                   ].map((hint, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${hint.ok && pw ? 'bg-green-500' : 'bg-[#E8EAF2]'}`}>
+                      <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${hint.ok && pw ? 'bg-[#5B4FE8]' : 'bg-[#E8EAF2]'}`}>
                         {hint.ok && pw && <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>}
                       </div>
-                      <span className={`text-xs transition-colors ${hint.ok && pw ? 'text-green-600' : 'text-[#9EA3BC]'}`}>{hint.label}</span>
+                      <span className={`text-xs transition-colors ${hint.ok && pw ? 'text-[#5B4FE8]' : 'text-[#9EA3BC]'}`}>{hint.label}</span>
                     </div>
                   ))}
                 </div>

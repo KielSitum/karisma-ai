@@ -1,186 +1,258 @@
-# 📖 Data Dictionary 
+# 📊 DATA SCIENCE — Karisma AI
 
-> **Source:** Glints Indonesia Job Platform  
-> **Pipeline Notebook:** `glints_analysis_fixed_usd.ipynb`  
-> **Raw Input:** `full_dataset_glints_v2.csv` (~60.000+ lowongan kerja)  
-> **Output File:** `glints_v2_cleaned.csv`
+> **Karisma AI: AI Career Navigator & Skill Intelligence untuk Mahasiswa**
+> Coding Camp 2026 powered by DBS Foundation | Tim CC26-PSU202
 
----
-
-## 📋 Ringkasan Dataset
-
-| Atribut | Detail |
-|---|---|
-| **Total kolom** | 30 kolom |
-| **Unit salary default** | USD/bulan (kurs IDR/USD = 17.000) |
-| **Hierarki kategori** | Industry (L1) → Job_Category_parent (L2) → Job_Category (L3) |
-| **Ketersediaan salary** | ~84% posting memiliki data salary valid |
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-2.x-150458?style=flat-square&logo=pandas&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-Live-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-Production-3ECF8E?style=flat-square&logo=supabase&logoColor=white)
+![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-F37626?style=flat-square&logo=jupyter&logoColor=white)
+![License](https://img.shields.io/badge/License-Academic-lightgrey?style=flat-square)
 
 ---
 
-## ⚙️ Pipeline Preprocessing Singkat
+## 📌 Deskripsi Proyek
 
-```
-RAW DATA (full_dataset_glints_v2.csv)
-  │
-  ├─ Drop duplikat berdasarkan Job_Link
-  ├─ Impute Industry null → 'UNKNOWN'
-  ├─ SALARY:
-  │    Convert mode → IDR bulanan (MONTH×1 | YEAR÷12 | HOUR×160 | DAY×22 | WEEK×4.3)
-  │    Floor outlier bawah: max < 850K IDR → 1.000.000; min < 850K → max(850K, 85%×max)
-  │    Konversi IDR → USD (÷ 17.000)
-  │    Label salary_tier berdasarkan bins USD/bulan
-  ├─ SKILLS: canonical name mapping (normalisasi variasi nama)
-  └─ FEATURE ENGINEERING:
-       experience_level, Education_Label, Job_Type_Label,
-       Work_Arr_Label, salary_avg, salary_range_width, skill_count, education_rank
-```
+Folder ini berisi seluruh pipeline **Data Science** dari proyek Karisma AI, mulai dari pengumpulan data lowongan kerja melalui web scraping platform Glints Indonesia, pembersihan dan analisis data, hingga penyediaan data terstruktur untuk kebutuhan model AI dan database production.
+
+Pipeline ini menghasilkan **60.000+ data lowongan kerja** yang digunakan sebagai fondasi sistem rekomendasi karir berbasis data untuk mahasiswa Indonesia.
 
 ---
 
-## 🗂️ Deskripsi Kolom
+## 👥 Tim Data Science
 
-### 🔑 Identitas & Teks
-
-| Kolom | Tipe | Nullable | Deskripsi |
-|---|---|---|---|
-| `Job_Link` | string | ❌ | URL unik per posting lowongan di Glints |
-| `Title` | string | ❌ | Judul posisi pekerjaan seperti di posting asli |
-| `Skills` | string | ❌ | Daftar skill dalam format comma-separated (data **mentah** sebelum normalisasi) |
-
----
-
-### 🏢 Hierarki Kategori Pekerjaan
-
-```
-Industry (L1)  →  Job_Category_parent (L2)  →  Job_Category (L3)
-   Technology         Engineering                 Software Engineer
-   Finance            Marketing                   Digital Marketing
-   Education          Sales                       B2B Sales
-```
-
-| Kolom | Tipe | Nullable | Deskripsi |
-|---|---|---|---|
-| `Industry` | string | ❌ | Bidang industri perusahaan (**Level 1**). Null asli diisi `'UNKNOWN'` |
-| `Job_Category_parent` | string | ❌ | Fungsi/kategori pekerjaan utama (**Level 2**) |
-| `Job_Category` | string | ❌ | Kategori pekerjaan detail (**Level 3**) |
-
----
-
-### 📄 Atribut Posting
-
-| Kolom | Tipe | Nullable | Nilai yang Diperbolehkan | Deskripsi |
-|---|---|---|---|---|
-| `Job_Type` | string | ❌ | `FULL_TIME`, `CONTRACT`, `INTERNSHIP`, `PART_TIME`, `PROJECT_BASED` | Jenis kontrak kerja |
-| `Work Arrangement` | string | ❌ | `ONSITE`, `HYBRID`, `REMOTE` | Skema lokasi kerja |
-| `Education` | string | ❌ | `PRIMARY_SCHOOL`, `SECONDARY_SCHOOL`, `HIGH_SCHOOL`, `DIPLOMA`, `BACHELOR_DEGREE`, `PROFESSIONAL_EDUCATION`, `MASTER_DEGREE`, `DOCTORATE` | Pendidikan minimum yang disyaratkan |
-| `Experience` | integer | ❌ | `{0, 1, 3, 5, 10}` | Pengalaman kerja minimum (tahun) |
-| `Salary_Mode` | string | ✅ | `MONTH`, `YEAR`, `HOUR`, `DAY`, `WEEK`, `PROJECT`, `null` | Mode pembayaran gaji asli. Null = posting tidak mencantumkan salary |
-
----
-
-### 💰 Kolom Salary — IDR (Juta Rupiah/bulan)
-
-> Kolom ini menyimpan nilai salary dalam satuan **Juta Rupiah per bulan**, berguna untuk analisis dan visualisasi konteks Indonesia.
-
-| Kolom | Tipe | Nullable | Deskripsi |
-|---|---|---|---|
-| `salary_min_monthly` | float | ✅ | Gaji minimum bulanan dalam IDR |
-| `salary_max_monthly` | float | ✅ | Gaji maksimum bulanan dalam IDR |
-| `salary_min_jt` | float | ✅ | Gaji minimum dalam **Juta IDR** (`salary_min_monthly / 1.000.000`) |
-| `salary_max_jt` | float | ✅ | Gaji maksimum dalam **Juta IDR** |
-| `salary_avg_jt` | float | ✅ | Rata-rata gaji dalam **Juta IDR** (`(min + max) / 2`) |
-| `salary_range_width_jt` | float | ✅ | Selisih max–min dalam **Juta IDR** — indikator ruang negosiasi |
-
----
-
-### 💵 Kolom Salary — USD (per bulan)
-
-> Kolom utama yang digunakan untuk analisis lintas industri. Kurs: **1 USD = 17.000 IDR**.
-
-| Kolom | Tipe | Nullable | Deskripsi |
-|---|---|---|---|
-| `salary_min_usd` | float | ✅ | Gaji minimum bulanan dalam **USD** (`salary_min_monthly / 17000`) |
-| `salary_max_usd` | float | ✅ | Gaji maksimum bulanan dalam **USD** |
-| `salary_avg` | float | ✅ | Rata-rata gaji dalam **USD** — nilai representatif utama |
-| `salary_avg_usd` | float | ✅ | Alias eksplisit dari `salary_avg` |
-| `salary_range_width_usd` | float | ✅ | Selisih max–min dalam **USD** — indikator ruang negosiasi gaji |
-
-**Catatan:** Semua kolom salary bernilai `null` jika `has_salary = False`.
-
----
-
-### 🏷️ Label & Flag Salary
-
-| Kolom | Tipe | Nullable | Deskripsi |
-|---|---|---|---|
-| `has_salary` | boolean | ❌ | `True` jika posting memiliki data salary valid |
-| `salary_tier` | string | ✅ | Label bucket gaji berdasarkan `salary_avg_usd` |
-
-**Tier Salary (bins USD/bulan):**
-
-| Tier | Rentang USD/bulan | Setara IDR/bulan |
+| ID | Nama | Role |
 |---|---|---|
-| `< $120` | 0 – 120 | < Rp 2,04 Juta |
-| `$120-300` | 120 – 300 | Rp 2,04 – 5,1 Juta |
-| `$300-600` | 300 – 600 | Rp 5,1 – 10,2 Juta |
-| `$600-1200` | 600 – 1.200 | Rp 10,2 – 20,4 Juta |
-| `> $1200` | > 1.200 | > Rp 20,4 Juta |
+| CDCC319D6Y1274 | Alfi Syahrin | Data Scientist |
+| CDCC319D6Y0416 | Mayadi Alamsyah Putra Silalahi | Data Scientist |
 
 ---
 
-### 🎓 Kolom Derived — Label & Encoding
+## 🗂️ Struktur Folder
 
-| Kolom | Tipe | Nullable | Source Column | Deskripsi |
-|---|---|---|---|---|
-| `experience_level` | string | ❌ | `Experience` | Label level karir (lihat mapping di bawah) |
-| `Education_Label` | string | ❌ | `Education` | Nama pendidikan dalam Bahasa Indonesia |
-| `Job_Type_Label` | string | ❌ | `Job_Type` | Nama tipe kerja dalam Bahasa Indonesia |
-| `Work_Arr_Label` | string | ❌ | `Work Arrangement` | Nama skema kerja dalam Bahasa Indonesia |
-| `education_rank` | integer | ❌ | `Education` | Nilai ordinal 1–7 untuk korelasi numerik |
-| `skill_count` | integer | ❌ | `Skills` | Jumlah skill per posting (dari split koma data mentah) |
+```
+DATA SCIENCE/
+│
+├── 📁 Dataset/
+│   ├── full_dataset_glints.csv          # Raw output scraping (±60.000 baris)
+│   ├── glints_nlp_ready.csv             # Output analisis → input model NLP
+│   ├── glints_v2_cleaned.csv            # Output analisis → dashboard Streamlit
+│   └── glints_category_output.csv       # Output analisis → database seeding
+│
+├── 📁 Scrapping_data/
+│   └── glints_scrapper.py               # Script web scraping API GraphQL Glints
+│
+├── 📁 Analysis_data/
+│   └── glints_analysis_final.ipynb      # Notebook EDA, cleaning & feature engineering
+│
+├── 📁 Seeding_database/
+│   ├── seeding_skills_database.py       # Script seeding ke Supabase (PostgreSQL)
+│   └── glints_category_output.csv       # File input untuk proses seeding
+│
+├── 📁 Karisma-dashboard/
+│   └── [PLACEHOLDER: nama file .py]     # Source code Streamlit EDA Dashboard
+│
+├── 📁 Data_dictionary/
+│   ├── glints_data_dictionary.csv       # Data dictionary format CSV
+│   ├── glints_data_dictionary.json      # Data dictionary format JSON
+│   └── README.md                        # Data dictionary format Markdown
+│
+├── 📁 A-B_Testing/
+│   └── model1.ipynb                     # Script A/B Testing 
+│
+├── 📄 Laporan_Teknis_DataScience_KarismaAI_CC26PSU202.pdf
+└── 📄 README.md                         
+```
 
-**Mapping `experience_level`:**
 
-| Nilai `Experience` | `experience_level` |
-|---|---|
-| `0` | Entry Level (0 thn) |
-| `1, 2, 3` | Junior (1-3 thn) |
-| `4, 5, 6` | Mid Level (4-6 thn) |
-| `> 6` (nilai: 10) | Senior (>6 thn) |
 
-**Mapping `education_rank`:**
+---
 
-| Education | Education_Label | education_rank |
+## 📁 Detail Setiap Folder
+
+### 📂 Dataset/
+Berisi seluruh file data yang dihasilkan oleh pipeline, baik data mentah hasil scraping maupun data yang sudah diproses oleh notebook analisis.
+
+| File | Baris | Kolom | Keterangan |
+|---|---|---|---|
+| `full_dataset_glints.csv` | ±60.000 | 13 | Raw output scraper, belum dibersihkan |
+| `glints_nlp_ready.csv` | ±60.000 | 20 | Skills ternormalisasi, salary ter-encode, siap untuk model NLP |
+| `glints_v2_cleaned.csv` | ±60.000 | 30 | Kolom paling lengkap, label human-readable, untuk dashboard |
+| `glints_category_output.csv` | 65 | 7 | 1 baris per job category, aggregasi salary & skills |
+
+---
+
+### 📂 Scrapping_data/
+Berisi script Python untuk mengumpulkan data lowongan kerja dari API GraphQL Glints Indonesia.
+
+**`glints_scrapper.py`**
+- Target endpoint: `https://glints.com/api/v2-alc/graphql?op=searchJobsV3`
+- Strategi: kombinasi **1.008 filter** (6 job type × 3 work arrangement × 7 experience × 8 education)
+- Fitur: resume capability, retry mechanism, rate limiting adaptif, incremental write ke CSV
+- Output: `full_dataset_glints.csv`
+
+**Cara menjalankan:**
+```bash
+# Pastikan cookie & user-agent sudah diisi di bagian HEADERS
+python glints_scrapper.py
+```
+
+> ⚠️ **Perhatian:** Sebelum menjalankan script, isi terlebih dahulu field `Authorization`, `User-Agent`, dan `Cookie` pada variabel `HEADERS` di baris 10–19 dengan nilai dari browser Anda.
+
+---
+
+### 📂 Analysis_data/
+Berisi notebook Jupyter yang melakukan seluruh proses cleaning, feature engineering, dan Exploratory Data Analysis (EDA).
+
+**`glints_analysis_final.ipynb`**
+
+Tahapan dalam notebook:
+1. **Data Understanding** — eksplorasi shape, hierarki kategori, missing values, duplikat
+2. **Data Cleaning** — drop duplikat, fill missing, normalisasi salary (IDR → USD), normalisasi skill via `SKILL_CANONICAL`
+3. **Feature Engineering** — `experience_level`, `education_rank`, `salary_tier`, `skill_count`, `has_salary`, dll
+4. **EDA (7 Research Questions)**:
+   - Industri apa yang paling aktif merekrut?
+   - Skill apa yang paling banyak diminati?
+   - Skill apa yang berkorelasi dengan gaji tertinggi?
+   - Bagaimana korelasi pengalaman dan kompensasi?
+   - Bagaimana distribusi salary tier?
+   - Kategori pekerjaan apa yang bergaji tertinggi?
+   - Bagaimana distribusi pendidikan dan work arrangement?
+5. **Export** — menghasilkan 3 file output ke folder `Dataset/`
+
+**Cara menjalankan:**
+```bash
+jupyter lab glints_analysis_final.ipynb
+# atau buka langsung di Kaggle Notebook / Google Colab
+```
+
+---
+
+### 📂 Seeding_database/
+Berisi script Python untuk mengisi database Supabase (PostgreSQL) production dengan data yang telah diproses.
+
+**`seeding_skills_database.py`**
+- Input: `glints_category_output.csv`
+- Output: mengisi 3 tabel di Supabase — `Job_listings`, `Skills`, `Job_Skills`
+- Fitur: transaksional (auto-rollback jika gagal), idempotent (`ON CONFLICT DO NOTHING`), batch insert per 1.000 baris
+
+**Skema database:**
+```sql
+Job_listings (id UUID, Job VARCHAR, Min_Salary INT, Max_Salary INT, created_at TIMESTAMP)
+Skills       (id UUID, Skill_name VARCHAR)
+Job_Skills   (id UUID, Job_listing_id UUID → Job_listings, Skills_id UUID → Skills)
+```
+
+**Cara menjalankan:**
+```bash
+pip install pandas psycopg2-binary
+# Isi DB_CONFIG di baris 18–25 dengan kredensial Supabase Anda
+python seeding_skills_database.py
+```
+
+> ⚠️ **Perhatian:** Isi variabel `DB_CONFIG` (host, user, password, project_ref) sebelum menjalankan script. Jangan commit kredensial ke repository.
+
+---
+
+### 📂 Karisma-dashboard/
+Berisi source code Streamlit EDA Dashboard yang menyajikan insight hasil analisis data pasar kerja Indonesia secara interaktif kepada publik.
+
+**Dashboard live:** https://karisma-dashboard.streamlit.app/
+
+Fitur dashboard:
+- Overview pasar kerja (KPI utama, ringkasan dataset, dan 7 insight)
+- Job Market (Distribusi industri, job cluster, tipe & arrangement pekerjaan)
+- Salary Analysis (Distribusi salary, perbandingan per industri, experience, pendidikan)
+- Skill Analysis (Top skills, skill premium, dan skill paling versatile)
+- Job Explorer (Filter & cari lowongan spesifik secara interaktif)
+
+**Cara menjalankan secara lokal:**
+```bash
+python -m venv venv
+
+venv\Scripts\activate
+
+pip install -r requirements.txt
+
+streamlit run app.py
+```
+
+---
+
+### 📂 Data_dictionary/
+Berisi dokumentasi lengkap seluruh kolom dari keempat file dataset dalam tiga format berbeda.
+
+| File | Format | Kegunaan |
 |---|---|---|
-| PRIMARY_SCHOOL | SD | 1 |
-| SECONDARY_SCHOOL | SMP | 2 |
-| HIGH_SCHOOL | SMA/SMK | 3 |
-| DIPLOMA | Diploma | 4 |
-| BACHELOR_DEGREE | S1 | 5 |
-| PROFESSIONAL_EDUCATION | Profesional | 5 |
-| MASTER_DEGREE | S2 | 6 |
-| DOCTORATE | S3 | 7 |
+| `glints_data_dictionary.csv` | CSV | Tabular, mudah dibuka di Excel / Google Sheets |
+| `glints_data_dictionary.json` | JSON | Integrasi programatik / API / tooling |
+| `README.md` | Markdown | Dokumentasi lengkap dengan diagram pipeline & skema SQL |
+
+Total **42 kolom** terdokumentasi, mencakup 11 kategori: Identitas, Hierarki Kategori, Salary Raw, Salary Processed (IDR & USD), Salary Encoded, Skills, Job Context, dan Grouped (Database Seeding).
 
 ---
 
-## ⚠️ Catatan Penting
+### 📂 A-B_Testing/
+Berisi script pengujian A/B Testing untuk memvalidasi insight dan asumsi yang ditemukan selama proses EDA.
 
-1. **Salary null** — Sekitar 16% posting tidak mencantumkan data gaji (`has_salary = False`). Kolom salary di baris tersebut bernilai `null`.
-2. **Kurs tetap** — Konversi IDR→USD menggunakan kurs tetap Rp 17.000/USD. Nilai USD bersifat indikatif, bukan nilai tukar real-time.
-3. **salary_avg vs salary_avg_usd** — Kedua kolom ini identik nilainya; `salary_avg_usd` merupakan alias eksplisit yang memperjelas unit.
-4. **Skills (kolom `Skills`)** — Adalah data **mentah** yang belum dinormalisasi. Untuk analisis skill yang sudah dinormalisasi (canonical mapping), gunakan output pipeline NLP terpisah (`glints_nlp_ready.csv`).
-5. **`Work Arrangement`** — Nama kolom ini memiliki spasi (bukan underscore), pastikan gunakan tanda kutip saat akses via pandas: `df['Work Arrangement']`.
-6. **PROJECT salary** — Posting dengan `Salary_Mode = PROJECT` diperlakukan sebagai lump-sum dan dikecualikan dari analisis salary bulanan (salary dianggap tidak dapat dikonversi secara reliable).
+**Cara menjalankan:**
+```bash
+# Run All Code IPYNB
+```
 
 ---
 
-## 📁 File Terkait
+## ⚙️ Setup dan Instalasi
 
-| File | Deskripsi |
+### Prerequisites
+- Python 3.10+
+- pip
+
+### Install dependencies
+```bash
+pip install pandas numpy requests matplotlib seaborn plotly scikit-learn streamlit psycopg2-binary jupyter
+```
+
+### Urutan eksekusi pipeline (dari awal)
+```bash
+# 1. Scraping data
+cd Scrapping_data/
+python glints_scrapper.py
+
+# 2. Analisis & cleaning (jalankan semua cell di notebook)
+cd ../Analysis_data/
+jupyter lab glints_analysis_final.ipynb
+
+# 3. Seeding database
+cd ../Seeding_database/
+python seeding_skills_database.py
+
+# 4. Jalankan dashboard
+cd ../Karisma-dashboard/
+streamlit run app.py
+```
+
+---
+
+## 🔗 Tautan Penting
+
+| Resource | URL |
 |---|---|
-| `data_dictionary.csv` | Data dictionary format tabel (CSV) |
-| `data_dictionary.json` | Data dictionary format terstruktur (JSON) dengan metadata lengkap |
-| `README.md` | Dokumen ini |
-| `glints_v2_cleaned.csv` | Dataset output utama |
-| `glints_nlp_ready.csv` | Dataset NLP-ready dengan skills ternormalisasi dan fitur text (output pipeline terpisah) |
+| 🌐 Streamlit Dashboard (Live) | https://karisma-dashboard.streamlit.app/ |
+| 💾 Repository GitHub | https://github.com/KielSitum/karisma-ai |
+| 📋 Project Plan | CC26-PSU202 — Coding Camp 2026 DBS Foundation |
+
+---
+
+## 📄 Laporan Teknis
+
+Dokumentasi lengkap seluruh proses pipeline Data Science tersedia pada file:
+
+**`Laporan_Teknis_DataScience_KarismaAI_CC26PSU202.pdf`**
+
+Laporan mencakup : Pendahuluan, Metodologi, Web Scraping, Data Cleaning, EDA, File Output, Dashboard, Database Seeding, Temuan & Implikasi, dan Kesimpulan.
+
+---
+
+*Coding Camp 2026 powered by DBS Foundation — Tim CC26-PSU202*
