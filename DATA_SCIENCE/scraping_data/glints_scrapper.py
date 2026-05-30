@@ -233,7 +233,7 @@ def full_scraper():
                     is_filter_success = True
                 
                 sleep_time = random.uniform(1.5, 3.5)
-                print(f"       [zZz] Sukses. Jeda anti-banned {sleep_time:.2f} detik...")
+                print(f"       [zZz] Sukses. Jeda {sleep_time:.2f} detik...")
                 time.sleep(sleep_time)
 
             if is_filter_success:
