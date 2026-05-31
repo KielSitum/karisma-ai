@@ -1,0 +1,30 @@
+[
+  {
+    "epoch": 1,
+    "loss": 0.0135,
+    "accuracy": 0.9954,
+    "val_loss": 0.0003,
+    "val_accuracy": 0.9999
+  },
+  {
+    "epoch": 2,
+    "loss": 0.0022,
+    "accuracy": 0.9995,
+    "val_loss": 0.0004,
+    "val_accuracy": 0.9999
+  },
+  {
+    "epoch": 3,
+    "loss": 0.0011,
+    "accuracy": 0.9998,
+    "val_loss": 0.0,
+    "val_accuracy": 1.0
+  },
+  {
+    "epoch": 4,
+    "loss": 0.001,
+    "accuracy": 0.9998,
+    "val_loss": 0.0006,
+    "val_accuracy": 0.9998
+  }
+]
