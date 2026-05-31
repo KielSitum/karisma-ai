@@ -8,7 +8,6 @@ const WEEK_META = [
 ];
 
 export default function LearningRoadmap({ matches }) {
-  // Default pilih karir pertama dari Top Matches jika tersedia
   const [selectedCareerIndex, setSelectedCareerIndex] = useState(0);
   const [roadmap, setRoadmap]                         = useState(null);
   const [loading, setLoading]                         = useState(false);
@@ -17,6 +16,15 @@ export default function LearningRoadmap({ matches }) {
 
   const currentMatch = matches?.[selectedCareerIndex] || null;
 
+  // Fungsi helper yang disesuaikan dengan variabel asli database kamu
+  const getCareerName = (match) => {
+    if (!match) return "Career Path";
+    // Membaca job.title atau predicted_career sesuai dengan CareerMatchCard.jsx
+    return match.job?.title || match.predicted_career || "Unknown Career";
+  };
+
+  const currentCareerName = getCareerName(currentMatch);
+
   // Ekstrak skill gaps dari karir yang sedang dipilih saat ini
   const gaps = Array.isArray(currentMatch?.skill_gaps)
     ? currentMatch.skill_gaps
@@ -24,7 +32,7 @@ export default function LearningRoadmap({ matches }) {
     ? currentMatch.skill_gaps.split(",").map((s) => s.trim()).filter(Boolean)
     : [];
 
-  // Reset data roadmap jika user pindah tab pilihan karir sebelum/sesudah generate
+  // Reset data roadmap jika user pindah tab pilihan karir
   useEffect(() => {
     setRoadmap(null);
     setError(null);
@@ -46,7 +54,7 @@ export default function LearningRoadmap({ matches }) {
         },
         body: JSON.stringify({ 
           skillGaps: gaps,
-          careerTitle: currentMatch.title || currentMatch.career 
+          careerTitle: currentCareerName
         }),
       });
       const data = await res.json();
@@ -65,20 +73,20 @@ export default function LearningRoadmap({ matches }) {
   return (
     <div className="flex flex-col gap-5 animate-fade-up">
 
-      
+      {/* ── Career Selection Selector tabs ── */}
       <div className="flex flex-col gap-2">
         <p className="text-[11px] font-bold text-[#9EA3BC] uppercase tracking-widest px-1">Select Target Career Path</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {matches.map((match, idx) => {
             const isSelected = selectedCareerIndex === idx;
-            const title = match.title || match.career || `Career #${idx + 1}`;
+            const title = getCareerName(match); // Menampilkan nama karir asli dari DB
             return (
               <button
                 key={idx}
                 onClick={() => setSelectedCareerIndex(idx)}
                 className="px-4 py-3 text-left rounded-xl border text-sm font-semibold transition-all duration-200 flex flex-col gap-0.5 cursor-pointer"
                 style={isSelected
-                  ? { background: '#5B4FE8', borderColor: '#5B4FE8', color: '#fff', boxShadow: '0 4px 12px rgba(91,79,232,0.15)' }
+                  ? { background: '#5B4FE8', borderColor: '#5B4FE8', color: '#fff', boxShadow: '0 4px 14px rgba(91,79,232,0.15)' }
                   : { background: '#fff', borderColor: '#E8EAF2', color: '#0F1226' }
                 }
               >
@@ -92,7 +100,7 @@ export default function LearningRoadmap({ matches }) {
         </div>
       </div>
 
-      
+      {/* ── Header Card ── */}
       <div className="card-base p-5 md:p-6">
         <div className="flex items-center justify-between mb-5 md:mb-6">
           <div className="flex items-center gap-4">
@@ -103,7 +111,7 @@ export default function LearningRoadmap({ matches }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-display font-bold text-[#0F1226] text-base">
-                Roadmap for {currentMatch.title || currentMatch.career}
+                Roadmap for {currentCareerName}
               </p>
               <p className="text-xs text-[#9EA3BC] mt-1">Accelerate your learning path to clear specific career gaps</p>
             </div>
@@ -114,7 +122,7 @@ export default function LearningRoadmap({ matches }) {
           </div>
         </div>
 
-        
+        {/* Skill tags */}
         {gaps.length > 0 ? (
           <div className="flex flex-wrap gap-2.5">
             {gaps.map((skill, i) => (
@@ -131,7 +139,7 @@ export default function LearningRoadmap({ matches }) {
         )}
       </div>
 
-      
+      {/* ── Generate Button ── */}
       {!roadmap && gaps.length > 0 && (
         <button
           onClick={generateRoadmap}
@@ -141,15 +149,15 @@ export default function LearningRoadmap({ matches }) {
           {loading ? (
             <>
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Building customized roadmap for {currentMatch.title || currentMatch.career}...
+              Building customized roadmap for {currentCareerName}...
             </>
           ) : (
-            `Create Roadmap for ${currentMatch.title || currentMatch.career}`
+            `Create Roadmap for ${currentCareerName}`
           )}
         </button>
       )}
 
-      
+      {/* ── Error ── */}
       {error && (
         <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-[#F0EFFE] border border-[#E4E1FD]">
           <span className="text-sm flex items-center gap-2 text-[#3B35B8]">
@@ -169,16 +177,16 @@ export default function LearningRoadmap({ matches }) {
         </div>
       )}
 
-      
+      {/* ── Roadmap Result ── */}
       {roadmap && (
         <div className="flex flex-col gap-4">
 
-          
+          {/* Summary */}
           <div className="card-base p-5 border-l-[3px] border-l-[#5B4FE8]">
             <p className="text-sm text-[#5A5F7D] leading-relaxed">{roadmap.summary}</p>
           </div>
 
-          
+          {/* Week Nav Pills */}
           <div className="grid grid-cols-4 gap-2">
             {roadmap.weeks?.map((week, i) => {
               const meta = WEEK_META[i % 4];
@@ -200,13 +208,13 @@ export default function LearningRoadmap({ matches }) {
             })}
           </div>
 
-          
+          {/* Active Week */}
           {roadmap.weeks?.map((week, i) => {
             if (i !== expandedWeek) return null;
             const meta = WEEK_META[i % 4];
             return (
               <div key={i} className="card-base overflow-hidden">
-                
+                {/* Week Header */}
                 <div className="flex items-center gap-3 px-6 py-4 bg-[#5B4FE8]">
                   <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
                     <span className="text-[13px] font-extrabold text-white tracking-tight">{meta.num}</span>
@@ -222,9 +230,9 @@ export default function LearningRoadmap({ matches }) {
                   </div>
                 </div>
 
-                
+                {/* Week Body */}
                 <div className="p-6 flex flex-col gap-6">
-                  
+                  {/* Goals */}
                   <div>
                     <p className="text-[11px] font-bold text-[#9EA3BC] uppercase tracking-widest mb-3">This Week's Goals</p>
                     <ul className="flex flex-col gap-2.5">
@@ -241,7 +249,7 @@ export default function LearningRoadmap({ matches }) {
 
                   <div className="h-px bg-[#E8EAF2]" />
 
-                  
+                  {/* Tasks */}
                   <div>
                     <p className="text-[11px] font-bold text-[#9EA3BC] uppercase tracking-widest mb-3">Daily Schedule</p>
                     <div className="flex flex-col gap-3">
@@ -276,7 +284,7 @@ export default function LearningRoadmap({ matches }) {
             );
           })}
 
-          
+          {/* Tips */}
           {roadmap.tips?.length > 0 && (
             <div className="card-base p-6">
               <p className="text-[11px] font-bold text-[#9EA3BC] uppercase tracking-widest mb-4">Learning Success Tips</p>
@@ -296,7 +304,7 @@ export default function LearningRoadmap({ matches }) {
             </div>
           )}
 
-          
+          {/* Insight Box */}
           <div className="rounded-xl p-4 md:p-5 flex gap-4 items-start bg-[#F0EFFE] border border-[#E4E1FD]">
             <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center flex-shrink-0 text-[#5B4FE8]">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -309,7 +317,7 @@ export default function LearningRoadmap({ matches }) {
             </p>
           </div>
 
-          
+          {/* Regenerate */}
           <div className="flex justify-center pb-2">
             <button
               onClick={() => setRoadmap(null)}
