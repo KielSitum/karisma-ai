@@ -35,31 +35,31 @@ Pipeline ini menghasilkan **60.000+ data lowongan kerja** yang digunakan sebagai
 DATA SCIENCE/
 │
 ├── 📁 Dataset/
-│   ├── full_dataset_glints.csv          # Raw output scraping (±60.000 baris)
-│   ├── glints_nlp_ready.csv             # Output analisis → input model NLP
-│   ├── glints_v2_cleaned.csv            # Output analisis → dashboard Streamlit
-│   └── glints_category_output.csv       # Output analisis → database seeding
+│   ├── full_dataset_glints.csv                             # Raw output scraping (±60.000 baris)
+│   ├── glints_nlp_ready.csv                                # Output analisis → input model NLP
+│   ├── glints_v2_cleaned.csv                               # Output analisis → dashboard Streamlit
+│   └── glints_category_output.csv                          # Output analisis → database seeding
 │
 ├── 📁 Scrapping_data/
-│   └── glints_scrapper.py               # Script web scraping API GraphQL Glints
+│   └── glints_scrapper.py                                  # Script web scraping API GraphQL Glints
 │
 ├── 📁 Analysis_data/
-│   └── glints_analysis_final.ipynb      # Notebook EDA, cleaning & feature engineering
+│   └── glints_analysis_final.ipynb                         # Notebook EDA, cleaning & feature engineering
 │
 ├── 📁 Seeding_database/
-│   ├── seeding_skills_database.py       # Script seeding ke Supabase (PostgreSQL)
-│   └── glints_category_output.csv       # File input untuk proses seeding
+│   ├── seeding_skills_database.py                          # Script seeding ke Supabase (PostgreSQL)
+│   └── glints_category_output.csv                          # File input untuk proses seeding
 │
 ├── 📁 Karisma-dashboard/
-│   └── [PLACEHOLDER: nama file .py]     # Source code Streamlit EDA Dashboard
+│   └── App.py                                              # Source code Streamlit EDA Dashboard
 │
 ├── 📁 Data_dictionary/
-│   ├── glints_data_dictionary.csv       # Data dictionary format CSV
-│   ├── glints_data_dictionary.json      # Data dictionary format JSON
-│   └── README.md                        # Data dictionary format Markdown
+│   ├── glints_data_dictionary.csv                          # Data dictionary format CSV
+│   ├── glints_data_dictionary.json                         # Data dictionary format JSON
+│   └── README.md                                           # Data dictionary format Markdown
 │
-├── 📁 A-B_Testing/
-│   └── model1.ipynb                     # Script A/B Testing 
+├── 📁 ab-Testing/
+│   └── ab_testing_karisma_ai_two_tailed.ipynb              # Script A/B Testing 
 │
 ├── 📄 Laporan_Teknis_DataScience_KarismaAI_CC26PSU202.pdf
 └── 📄 README.md                         
@@ -193,7 +193,7 @@ Total **42 kolom** terdokumentasi, mencakup 11 kategori: Identitas, Hierarki Kat
 
 ---
 
-### 📂 A-B_Testing/
+### 📂 AB-Testing/
 Berisi script pengujian A/B Testing untuk memvalidasi insight dan asumsi yang ditemukan selama proses EDA.
 
 **Cara menjalankan:**
