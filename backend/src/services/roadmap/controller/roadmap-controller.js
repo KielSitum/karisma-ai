@@ -10,7 +10,7 @@ export const generateRoadmap = async (req, res) => {
     console.log("API KEY EXISTS:", !!process.env.GEMINI_API_KEY);
     console.log("REQ BODY:", req.body);
 
-    const { skillGaps } = req.body;
+    const { skillGaps, careerTitle } = req.body;
 
     // Input validation
     if (!skillGaps || !Array.isArray(skillGaps) || skillGaps.length === 0) {
@@ -21,11 +21,12 @@ export const generateRoadmap = async (req, res) => {
     }
 
     const skillList = skillGaps.join(", ");
+    const targetCareer = careerTitle ? `for a target career as a ${careerTitle}` : "";
 
-const prompt = `
+    const prompt = `
 You are an experienced career mentor.
 
-Create an intensive 4-week learning roadmap for university students who want to master the following skills from a beginner level:
+Create an intensive 4-week learning roadmap for university students who want to master the following missing skills ${targetCareer} from a beginner level:
 
 ${skillList}
 
@@ -39,7 +40,7 @@ CRITICAL RULES:
 
 JSON Format:
 {
-  "summary": "Brief motivational summary",
+  "summary": "Brief motivational summary focusing on the target career path",
   "weeks": [
     {
       "week": 1,
@@ -149,6 +150,7 @@ JSON Format:
     return res.status(200).json({
       success: true,
       skillGaps,
+      careerTitle,
       roadmap,
     });
 

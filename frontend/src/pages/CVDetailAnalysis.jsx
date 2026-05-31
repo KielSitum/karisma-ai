@@ -255,7 +255,7 @@ export default function CVDetailAnalysis() {
               </div>
             </div>
           )}
-
+          
           {hasMatches && (
             <div className="animate-fade-up">
               <div className="flex items-center gap-3 mb-5 flex-wrap">
@@ -266,24 +266,25 @@ export default function CVDetailAnalysis() {
               </div>
               <div className="flex flex-col gap-4">
                 {cv.matches.map((match) => (
-                  <CareerMatchCard key={match.id} match={match} totalSkills={totalSkills} />
+                  <CareerMatchCard key="{match.id}" match="{match}" totalSkills="{totalSkills}"/>
                 ))}
               </div>
             </div>
           )}
 
-          {hasMatches && allSkillGaps.length > 0 && (
+          
+          {hasMatches && cv.matches.length > 0 && (
             <div className="mt-8 animate-fade-up">
-              <LearningRoadmap skillGaps={allSkillGaps} />
+              <LearningRoadmap matches="{cv.matches}"/>
             </div>
           )}
 
         </div>
       </main>
-      <Footer />
+      <Footer/>
 
-      {/* Chatbot — fixed kanan bawah */}
-      <ChatbotPopup />
+      
+      <ChatbotPopup/>
     </div>
   );
 }
