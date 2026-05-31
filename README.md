@@ -201,3 +201,10 @@ Make both buckets **public** so files can be accessed via public URL.
 4. Update the `from` address in the email templates to match your verified domain
 
 ---
+
+## Model AI
+
+- [Skill Extractor Model](https://drive.google.com/drive/folders/1ALnAGbh6ebAxEw1AmFLvBwCajFY2i7W9?usp=drive_link)
+- [Career Classifier Model](https://drive.google.com/drive/folders/1j_zBJjbd0WDGED1mxnaoMmUvpEeGSPM_?usp=drive_link)
+
+---
