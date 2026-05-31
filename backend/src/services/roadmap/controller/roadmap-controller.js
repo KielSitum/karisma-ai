@@ -25,7 +25,7 @@ export const generateRoadmap = async (req, res) => {
     const prompt = `
 You are an experienced career mentor.
 
-Create an intensive 4-week learning roadmap for Indonesian students who want to master the following skills from a beginner level:
+Create an intensive 4-week learning roadmap for university students who want to master the following skills from a beginner level:
 
 ${skillList}
 
@@ -34,6 +34,7 @@ CRITICAL RULES:
 - Do not use markdown
 - Do not use \`\`\`
 - Do not add any explanations outside of the JSON
+- Use english language only
 
 JSON Format:
 {
