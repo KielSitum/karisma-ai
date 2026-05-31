@@ -22,7 +22,7 @@ export const generateRoadmap = async (req, res) => {
 
     const skillList = skillGaps.join(", ");
 
-    const prompt = `
+const prompt = `
 You are an experienced career mentor.
 
 Create an intensive 4-week learning roadmap for university students who want to master the following skills from a beginner level:
@@ -35,6 +35,7 @@ CRITICAL RULES:
 - Do not use \`\`\`
 - Do not add any explanations outside of the JSON
 - Use english language only
+- For each week, the "theme" value MUST start with the specific phase prefix corresponding to that week as defined below.
 
 JSON Format:
 {
@@ -42,7 +43,46 @@ JSON Format:
   "weeks": [
     {
       "week": 1,
-      "theme": "Week theme",
+      "theme": "Foundation: [Insert week 1 specific theme here]",
+      "goals": ["Goal 1", "Goal 2"],
+      "tasks": [
+        {
+          "day": "Monday - Tuesday",
+          "activity": "Learning activity",
+          "skill": "Skill being learned",
+          "resources": "Learning resources"
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "theme": "Deepening: [Insert week 2 specific theme here]",
+      "goals": ["Goal 1", "Goal 2"],
+      "tasks": [
+        {
+          "day": "Monday - Tuesday",
+          "activity": "Learning activity",
+          "skill": "Skill being learned",
+          "resources": "Learning resources"
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "theme": "Practice: [Insert week 3 specific theme here]",
+      "goals": ["Goal 1", "Goal 2"],
+      "tasks": [
+        {
+          "day": "Monday - Tuesday",
+          "activity": "Learning activity",
+          "skill": "Skill being learned",
+          "resources": "Learning resources"
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "theme": "Mastery: [Insert week 4 specific theme here]",
       "goals": ["Goal 1", "Goal 2"],
       "tasks": [
         {
