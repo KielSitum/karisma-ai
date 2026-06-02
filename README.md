@@ -15,7 +15,13 @@
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Arsitektur & Tech Stack
+
+Aplikasi ini dibangun dengan arsitektur modern yang memisahkan antara klien (*frontend*), server (*backend*), dan layanan *AI*.
+
+<p align="center">
+  <img src="frontend/public/arsitektur-karisma-ai.png" width="500" alt="Arsitektur Karisma AI">
+</p>
 
 | Layer | Technology |
 |---|---|
@@ -206,5 +212,18 @@ Make both buckets **public** so files can be accessed via public URL.
 
 - [Skill Extractor Model](https://drive.google.com/drive/folders/1ALnAGbh6ebAxEw1AmFLvBwCajFY2i7W9?usp=drive_link)
 - [Career Classifier Model](https://drive.google.com/drive/folders/1j_zBJjbd0WDGED1mxnaoMmUvpEeGSPM_?usp=drive_link)
+
+---
+
+## Tim Pengembang (CC26-PSU202)
+
+| Nama | ID | Universitas | Peran |
+| :--- | :--- | :--- | :--- |
+| Brisbane Jovan Rivaldi Sihombing | CACC319D6X0803 | Universitas Sumatera Utara | Project Manager & AI Engineer |
+| Jesica Eldamaris Maha | CACC319D6X0803 | Universitas Sumatera Utara | AI Engineer |
+| Mayadi Alamsyah Putra Silalahi | CDCC319D6Y0416 | Universitas Sumatera Utara | Data Scientist |
+| Alfi Syahrin | CDCC319D6Y1274 | Universitas Sumatera Utara | Data Scientist |
+| Yehezkiel Situmorang | CFCC319D6Y1709 | Universitas Sumatera Utara | Full-Stack Web Developer |
+| Fausta Raihan Maulana | CFCC200D6Y0848 | Universitas Diponegoro | Full-Stack Web Developer |
 
 ---
