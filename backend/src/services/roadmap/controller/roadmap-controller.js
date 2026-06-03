@@ -4,65 +4,15 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-const MODELS = [
-  "gemini-2.5-flash",
-  "gemini-2.0-flash",
-];
-
-async function generateWithRetry(prompt, maxRetries = 1) {
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    const modelName = MODELS[attempt % MODELS.length];
-
-    try {
-      console.log(
-        `Roadmap attempt ${attempt + 1}/${maxRetries} using ${modelName}`
-      );
-
-      const response = await ai.models.generateContent({
-        model: modelName,
-        contents: prompt,
-        config: {
-          temperature: 0.4,
-          maxOutputTokens: 2048,
-        },
-      });
-
-      console.log(`Roadmap success with ${modelName}`);
-
-      return response;
-    } catch (err) {
-      const isRetryable =
-        err?.status === 503 ||
-        err?.status === 429 ||
-        err?.message?.includes("503") ||
-        err?.message?.includes("429") ||
-        err?.message?.includes("UNAVAILABLE") ||
-        err?.message?.includes("RESOURCE_EXHAUSTED");
-
-      const isLast = attempt === maxRetries - 1;
-
-      console.error(
-        `Roadmap attempt ${attempt + 1} failed (${modelName}):`,
-        err.message
-      );
-
-      if (isRetryable && !isLast) {
-        const waitMs = 4000 * (attempt + 1);
-
-        await new Promise((r) => setTimeout(r, waitMs));
-
-        continue;
-      }
-
-      throw err;
-    }
-  }
-}
-
-export async function generateRoadmap(req, res) {
+export const generateRoadmap = async (req, res) => {
   try {
-    const { skillGaps } = req.body;
+    console.log("===== ROADMAP REQUEST =====");
+    console.log("API KEY EXISTS:", !!process.env.GEMINI_API_KEY);
+    console.log("REQ BODY:", req.body);
 
+    const { skillGaps, careerTitle } = req.body;
+
+    // Input validation
     if (!skillGaps || !Array.isArray(skillGaps) || skillGaps.length === 0) {
       return res.status(400).json({
         success: false,
@@ -70,94 +20,147 @@ export async function generateRoadmap(req, res) {
       });
     }
 
-    const limitedSkills = skillGaps.slice(0, 3);
-
-    const skillList = limitedSkills.join(", ");
+    const skillList = skillGaps.join(", ");
+    const targetCareer = careerTitle ? `for a target career as a ${careerTitle}` : "";
 
     const prompt = `
-Return ONLY valid JSON.
+You are an experienced career mentor.
 
-Create a practical and detailed 4-week learning roadmap for a beginner who wants to improve these skills:
+Create an intensive 4-week learning roadmap for university students who want to master the following missing skills ${targetCareer} from a beginner level:
 
 ${skillList}
 
-Requirements:
-- Return valid JSON only
+CRITICAL RULES:
+- Reply ONLY with a valid JSON
 - Do not use markdown
-- Do not use backticks
-- Do not add explanations outside JSON
-- Write everything in English
-- Keep the roadmap clear and beginner-friendly
-- Make activities practical and actionable
-- Each week must have:
-  - 1 learning theme
-  - 2 tasks
-- Each activity should be 1-2 short sentences only
-- Avoid special characters and unnecessary symbols
-- Use plain text only
+- Do not use \`\`\`
+- Do not add any explanations outside of the JSON
+- Use english language only
+- For each week, the "theme" value MUST start with the specific phase prefix corresponding to that week as defined below.
 
-JSON format:
+JSON Format:
 {
-  "summary": "Short motivational summary",
+  "summary": "Brief motivational summary focusing on the target career path",
   "weeks": [
     {
       "week": 1,
-      "theme": "Week theme",
+      "theme": "Foundation: [Insert week 1 specific theme here]",
+      "goals": ["Goal 1", "Goal 2"],
       "tasks": [
         {
-          "day": "Monday - Wednesday",
-          "activity": "Learning activity"
-        },
+          "day": "Monday - Tuesday",
+          "activity": "Learning activity",
+          "skill": "Skill being learned",
+          "resources": "Learning resources"
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "theme": "Deepening: [Insert week 2 specific theme here]",
+      "goals": ["Goal 1", "Goal 2"],
+      "tasks": [
         {
-          "day": "Thursday - Sunday",
-          "activity": "Practice or mini project"
+          "day": "Monday - Tuesday",
+          "activity": "Learning activity",
+          "skill": "Skill being learned",
+          "resources": "Learning resources"
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "theme": "Practice: [Insert week 3 specific theme here]",
+      "goals": ["Goal 1", "Goal 2"],
+      "tasks": [
+        {
+          "day": "Monday - Tuesday",
+          "activity": "Learning activity",
+          "skill": "Skill being learned",
+          "resources": "Learning resources"
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "theme": "Mastery: [Insert week 4 specific theme here]",
+      "goals": ["Goal 1", "Goal 2"],
+      "tasks": [
+        {
+          "day": "Monday - Tuesday",
+          "activity": "Learning activity",
+          "skill": "Skill being learned",
+          "resources": "Learning resources"
         }
       ]
     }
+  ],
+  "tips": [
+    "Tip 1",
+    "Tip 2",
+    "Tip 3"
   ]
 }
 `.trim();
 
-    const response = await generateWithRetry(prompt);
+    console.log("Generating roadmap...");
 
-    // FIX PENTING
-    const rawText = response.text || "";
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
 
-    console.log("RAW TEXT:");
-    console.log(rawText);
+    console.log("FULL RESPONSE:", response);
 
+    // Safely retrieve the text response
+    const rawText = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    console.log("RAW TEXT:", rawText);
+
+    if (!rawText) {
+      return res.status(500).json({
+        success: false,
+        message: "AI did not return any response.",
+      });
+    }
+
+    // Clean up markdown wrapper if accidently generated by the AI
     const cleanText = rawText
       .replace(/```json/g, "")
       .replace(/```/g, "")
       .trim();
 
+    console.log("CLEAN TEXT:", cleanText);
+
     let roadmap;
 
+    // Safely parse JSON
     try {
       roadmap = JSON.parse(cleanText);
     } catch (parseError) {
-      console.error("JSON Parse Error:");
-      console.error(cleanText);
+      console.error("JSON PARSE ERROR:", parseError);
 
       return res.status(500).json({
         success: false,
-        message: "AI returned malformed JSON.",
+        message: "Invalid JSON format received from AI.",
         raw: cleanText,
       });
     }
 
     return res.status(200).json({
       success: true,
-      skillGaps: limitedSkills,
+      skillGaps,
+      careerTitle,
       roadmap,
     });
+
   } catch (error) {
-    console.error("===== ROADMAP ERROR =====");
+    console.error("===== GEMINI ERROR =====");
     console.error(error);
 
     return res.status(500).json({
       success: false,
-      message: error.message || "Server error",
+      message: error.message || "An internal server error occurred.",
     });
   }
-}
+};

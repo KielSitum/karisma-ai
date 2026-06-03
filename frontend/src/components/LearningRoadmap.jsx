@@ -1,16 +1,4 @@
-import { useState } from "react";
-
-// Palet selaras dengan Home.jsx
-// Primary: #5B4FE8, Primary light: #F0EFFE, Border: #E4E1FD
-// Dark: #0F1226, Subtle text: #5A5F7D, #9EA3BC
-const T = {
-  accent:      "#5B4FE8",   // primary — sama dengan Home
-  accentLight: "#818CF8",   // primary soft
-  bg:          "#F0EFFE",   // primary-light — sama dengan Home bg-primary-light
-  border:      "#E4E1FD",   // primary border subtle
-  text:        "#3B35B8",   // primary dark text
-  dark:        "#0F1226",
-};
+import { useState, useEffect } from "react";
 
 const WEEK_META = [
   { num: "01", label: "Foundation" },
@@ -19,20 +7,39 @@ const WEEK_META = [
   { num: "04", label: "Mastery"    },
 ];
 
-export default function LearningRoadmap({ skillGaps }) {
-  const [roadmap, setRoadmap]           = useState(null);
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState(null);
-  const [expandedWeek, setExpandedWeek] = useState(0);
+export default function LearningRoadmap({ matches }) {
+  const [selectedCareerIndex, setSelectedCareerIndex] = useState(0);
+  const [roadmap, setRoadmap]                         = useState(null);
+  const [loading, setLoading]                         = useState(false);
+  const [error, setError]                             = useState(null);
+  const [expandedWeek, setExpandedWeek]               = useState(0);
 
-  const gaps = Array.isArray(skillGaps)
-    ? skillGaps
-    : typeof skillGaps === "string"
-    ? skillGaps.split(",").map((s) => s.trim()).filter(Boolean)
+  const currentMatch = matches?.[selectedCareerIndex] || null;
+
+  // Fungsi helper yang disesuaikan dengan variabel asli database kamu
+  const getCareerName = (match) => {
+    if (!match) return "Career Path";
+    // Membaca job.title atau predicted_career sesuai dengan CareerMatchCard.jsx
+    return match.job?.title || match.predicted_career || "Unknown Career";
+  };
+
+  const currentCareerName = getCareerName(currentMatch);
+
+  // Ekstrak skill gaps dari karir yang sedang dipilih saat ini
+  const gaps = Array.isArray(currentMatch?.skill_gaps)
+    ? currentMatch.skill_gaps
+    : typeof currentMatch?.skill_gaps === "string"
+    ? currentMatch.skill_gaps.split(",").map((s) => s.trim()).filter(Boolean)
     : [];
 
+  // Reset data roadmap jika user pindah tab pilihan karir
+  useEffect(() => {
+    setRoadmap(null);
+    setError(null);
+  }, [selectedCareerIndex]);
+
   const generateRoadmap = async () => {
-    if (gaps.length === 0) return;
+    if (gaps.length === 0 || !currentMatch) return;
     setLoading(true);
     setError(null);
     setRoadmap(null);
@@ -45,7 +52,10 @@ export default function LearningRoadmap({ skillGaps }) {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ skillGaps: gaps }),
+        body: JSON.stringify({ 
+          skillGaps: gaps,
+          careerTitle: currentCareerName
+        }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.message || "Failed to generate roadmap");
@@ -58,48 +68,79 @@ export default function LearningRoadmap({ skillGaps }) {
     }
   };
 
-  if (gaps.length === 0) return null;
+  if (!matches || matches.length === 0) return null;
 
   return (
     <div className="flex flex-col gap-5 animate-fade-up">
+
+      {/* ── Career Selection Selector tabs ── */}
+      <div className="flex flex-col gap-2">
+        <p className="text-[11px] font-bold text-[#9EA3BC] uppercase tracking-widest px-1">Select Target Career Path</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {matches.map((match, idx) => {
+            const isSelected = selectedCareerIndex === idx;
+            const title = getCareerName(match); // Menampilkan nama karir asli dari DB
+            return (
+              <button
+                key={idx}
+                onClick={() => setSelectedCareerIndex(idx)}
+                className="px-4 py-3 text-left rounded-xl border text-sm font-semibold transition-all duration-200 flex flex-col gap-0.5 cursor-pointer"
+                style={isSelected
+                  ? { background: '#5B4FE8', borderColor: '#5B4FE8', color: '#fff', boxShadow: '0 4px 14px rgba(91,79,232,0.15)' }
+                  : { background: '#fff', borderColor: '#E8EAF2', color: '#0F1226' }
+                }
+              >
+                <span className="truncate w-full">{title}</span>
+                <span className={`text-[10px] font-medium ${isSelected ? 'text-white/70' : 'text-[#9EA3BC]'}`}>
+                  {match.skill_gaps?.length || 0} missing skills
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* ── Header Card ── */}
       <div className="card-base p-5 md:p-6">
         <div className="flex items-center justify-between mb-5 md:mb-6">
           <div className="flex items-center gap-4">
-            {/* Icon: senada Home — bg-primary-light text-primary */}
             <div className="w-12 h-12 bg-[#F0EFFE] text-[#5B4FE8] rounded-xl flex items-center justify-center flex-shrink-0">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-display font-bold text-[#0F1226] text-base">Personalized Learning Roadmap</p>
-              <p className="text-xs text-[#9EA3BC] mt-1">A 4-week plan built around your skill gaps</p>
+              <p className="font-display font-bold text-[#0F1226] text-base">
+                Roadmap for {currentCareerName}
+              </p>
+              <p className="text-xs text-[#9EA3BC] mt-1">Accelerate your learning path to clear specific career gaps</p>
             </div>
           </div>
-          {/* Badge — senada Home */}
           <div className="bg-[#F8F9FE] border border-[#E8EAF2] px-4 py-2 rounded-xl flex items-center flex-shrink-0">
             <span className="text-sm font-bold text-[#5B4FE8]">{gaps.length}</span>
             <span className="text-xs font-semibold text-[#5A5F7D] ml-1.5 uppercase tracking-wider">Gaps</span>
           </div>
         </div>
 
-        {/* Skill tags — senada Home hover style */}
-        <div className="flex flex-wrap gap-2.5">
-          {gaps.map((skill, i) => (
-            <span
-              key={i}
-              className="px-3.5 py-1.5 bg-[#F8F9FE] border border-[#E8EAF2] text-[#0F1226] text-sm font-medium rounded-lg hover:border-[#E4E1FD] hover:bg-[#F0EFFE] hover:text-[#5B4FE8] transition-colors duration-200 cursor-default"
-            >
-              {skill}
-            </span>
-          ))}
-        </div>
+        {/* Skill tags */}
+        {gaps.length > 0 ? (
+          <div className="flex flex-wrap gap-2.5">
+            {gaps.map((skill, i) => (
+              <span
+                key={i}
+                className="px-3.5 py-1.5 bg-[#F8F9FE] border border-[#E8EAF2] text-[#0F1226] text-sm font-medium rounded-lg hover:border-[#E4E1FD] hover:bg-[#F0EFFE] hover:text-[#5B4FE8] transition-colors duration-200 cursor-default"
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-[#5A5F7D] italic">No skill gaps found for this career path. You are good to go!</p>
+        )}
       </div>
 
-      {/* ── Generate Button — btn-primary dari Home ── */}
-      {!roadmap && (
+      {/* ── Generate Button ── */}
+      {!roadmap && gaps.length > 0 && (
         <button
           onClick={generateRoadmap}
           disabled={loading}
@@ -108,10 +149,10 @@ export default function LearningRoadmap({ skillGaps }) {
           {loading ? (
             <>
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Creating your learning roadmap...
+              Building customized roadmap for {currentCareerName}...
             </>
           ) : (
-            'Create My Learning Roadmap'
+            `Create Roadmap for ${currentCareerName}`
           )}
         </button>
       )}
@@ -173,8 +214,7 @@ export default function LearningRoadmap({ skillGaps }) {
             const meta = WEEK_META[i % 4];
             return (
               <div key={i} className="card-base overflow-hidden">
-
-                {/* Week Header — gradient senada Home hero gradient */}
+                {/* Week Header */}
                 <div className="flex items-center gap-3 px-6 py-4 bg-[#5B4FE8]">
                   <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
                     <span className="text-[13px] font-extrabold text-white tracking-tight">{meta.num}</span>
@@ -192,7 +232,6 @@ export default function LearningRoadmap({ skillGaps }) {
 
                 {/* Week Body */}
                 <div className="p-6 flex flex-col gap-6">
-
                   {/* Goals */}
                   <div>
                     <p className="text-[11px] font-bold text-[#9EA3BC] uppercase tracking-widest mb-3">This Week's Goals</p>
@@ -265,7 +304,7 @@ export default function LearningRoadmap({ skillGaps }) {
             </div>
           )}
 
-          {/* Insight Box — senada About section Home */}
+          {/* Insight Box */}
           <div className="rounded-xl p-4 md:p-5 flex gap-4 items-start bg-[#F0EFFE] border border-[#E4E1FD]">
             <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center flex-shrink-0 text-[#5B4FE8]">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

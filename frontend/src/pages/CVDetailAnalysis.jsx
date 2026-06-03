@@ -163,32 +163,32 @@ function ChatbotPopup() {
         </div>
       )}
 
-  {/* FLOATING BUTTON */}
-<button
-  onClick={() => setIsOpen((prev) => !prev)}
-  className={`fixed z-[9999] bottom-4 right-4 sm:bottom-6 sm:right-6 w-14 h-14 rounded-full shadow-xl active:scale-95 transition-all overflow-hidden border-2 group ${
-    isOpen ? 'hidden sm:flex' : 'flex'
-  }`}
-  style={{ animation: isOpen ? 'none' : 'floatBounce 2s ease-in-out infinite' }}
->
-  {isOpen ? (
-      <div className="w-full h-full bg-[#5B4FE8] flex items-center justify-center">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-      <line x1="18" y1="6" x2="6" y2="18"/>
-      <line x1="6" y1="6" x2="18" y2="18"/>
-    </svg>
-  </div>
-  ) : (
-    <div className="w-full h-full bg-[#5B4FE8] flex items-center justify-center">
-      <img src="/Logo_chat.png" alt="Karisma AI" className="w-7 h-7 object-contain" />
-      {/* Tooltip */}
-      <span className="absolute bottom-16 right-0 bg-[#0F1226] text-white text-xs font-medium px-3 py-1.5 rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg">
-        Ask Karisma AI
-        <span className="absolute -bottom-1 right-4 w-2 h-2 bg-[#0F1226] rotate-45" />
-      </span>
-    </div>
-  )}
-</button>
+      {/* FLOATING BUTTON */}
+      <button
+        onClick={() => setIsOpen((prev) => !prev)}
+        className={`fixed z-[9999] bottom-4 right-4 sm:bottom-6 sm:right-6 w-14 h-14 rounded-full shadow-xl active:scale-95 transition-all overflow-hidden border-2 group ${
+          isOpen ? 'hidden sm:flex' : 'flex'
+        }`}
+        style={{ animation: isOpen ? 'none' : 'floatBounce 2s ease-in-out infinite' }}
+      >
+        {isOpen ? (
+          <div className="w-full h-full bg-[#5B4FE8] flex items-center justify-center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </div>
+        ) : (
+          <div className="w-full h-full bg-[#5B4FE8] flex items-center justify-center">
+            <img src="/Logo_chat.png" alt="Karisma AI" className="w-7 h-7 object-contain" />
+            {/* Tooltip */}
+            <span className="absolute bottom-16 right-0 bg-[#0F1226] text-white text-xs font-medium px-3 py-1.5 rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg">
+              Ask Karisma AI
+              <span className="absolute -bottom-1 right-4 w-2 h-2 bg-[#0F1226] rotate-45" />
+            </span>
+          </div>
+        )}
+      </button>
     </>
   );
 }
@@ -216,16 +216,11 @@ export default function CVDetailAnalysis() {
   if (!cv) return <Navigate to="/cv-history" replace />;
 
   const totalSkills = cv.analysis?.skills?.length || 0;
-  const hasMatches  = (cv.matches?.length || 0) > 0;
+  
+  // Amankan data matches agar selalu berbentuk array valid
+  const safeMatches = Array.isArray(cv.matches) ? cv.matches : [];
+  const hasMatches  = safeMatches.length > 0;
   const isPending   = cv.analysis?.status === 'pending';
-
-  const allSkillGaps = [
-    ...new Set(
-      (cv.matches || [])
-        .flatMap((m) => m.skill_gaps || [])
-        .filter(Boolean)
-    ),
-  ].slice(0, 5);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F9FE] overflow-x-hidden">
@@ -260,21 +255,22 @@ export default function CVDetailAnalysis() {
             <div className="animate-fade-up">
               <div className="flex items-center gap-3 mb-5 flex-wrap">
                 <h2 className="font-display font-bold text-lg sm:text-xl text-[#0F1226]">
-                  Top {cv.matches.length} Career Matches
+                  Top {safeMatches.length} Career Matches
                 </h2>
                 <div className="flex-1 h-px bg-[#E8EAF2]" />
               </div>
               <div className="flex flex-col gap-4">
-                {cv.matches.map((match) => (
+                {safeMatches.map((match) => (
                   <CareerMatchCard key={match.id} match={match} totalSkills={totalSkills} />
                 ))}
               </div>
             </div>
           )}
 
-          {hasMatches && allSkillGaps.length > 0 && (
+          {/* Load Komponen Roadmap Baru dengan Mengoper Data Matches */}
+          {hasMatches && (
             <div className="mt-8 animate-fade-up">
-              <LearningRoadmap skillGaps={allSkillGaps} />
+              <LearningRoadmap matches={safeMatches} />
             </div>
           )}
 
