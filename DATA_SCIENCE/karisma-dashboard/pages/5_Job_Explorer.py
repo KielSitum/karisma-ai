@@ -16,15 +16,15 @@ if css_path.exists():
     with open(css_path) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# ── Data ──
+# Data
 df_raw = load_data()
 df     = render_sidebar_filters(df_raw)
 df_sal = get_salary_df(df)
 
-# ── Helper kolom USD ──
+# Helper kolom USD
 SAL_COL = 'salary_avg_usd' if 'salary_avg_usd' in df.columns else 'salary_avg'
 
-# ── Header ──
+# Header
 st.markdown("""
 <div class="page-header">
     <h1>🔍 Job Explorer</h1>
@@ -32,7 +32,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ── Filter tambahan spesifik halaman ini ──
+# Filter tambahan spesifik halaman ini
 st.markdown('<p class="section-label">Filter Tambahan</p>', unsafe_allow_html=True)
 
 col_f1, col_f2, col_f3 = st.columns(3)
@@ -53,7 +53,7 @@ with col_f2:
 with col_f3:
     has_salary_only = st.checkbox("Hanya tampilkan yang ada data salary", value=False)
 
-# ── Terapkan filter tambahan ──
+# Terapkan filter tambahan
 df_exp = df.copy()
 
 if keyword:
@@ -72,7 +72,7 @@ st.caption(f"Ditemukan **{len(df_exp):,}** lowongan.")
 
 st.markdown("---")
 
-# ── Tabel Lowongan ──
+# Tabel Lowongan
 st.markdown('<p class="section-label">Daftar Lowongan</p>', unsafe_allow_html=True)
 
 display_cols = [c for c in [
@@ -110,7 +110,7 @@ if len(df_exp) > 500:
 
 st.markdown("---")
 
-# ── Demand × Salary Quadrant ──
+# Demand × Salary Quadrant
 st.markdown('<p class="section-label">Demand × Salary Quadrant</p>', unsafe_allow_html=True)
 st.markdown("#### Posisi tiap Job Category di matriks Demand × Median Salary")
 

@@ -25,7 +25,6 @@ LEVEL_ORDER = [
     'Expert (10+ thn)',
 ]
 
-# ── Helper: kolom USD yang tersedia ─────────────────────────────────────────
 def _sal_col(df: pd.DataFrame) -> str:
     """Kembalikan nama kolom salary USD yang tersedia di dataframe."""
     return 'salary_avg_usd' if 'salary_avg_usd' in df.columns else 'salary_avg'

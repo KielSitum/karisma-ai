@@ -5,7 +5,6 @@ import pandas as pd
 
 def extract_with_pdfminer(pdf_path):
     try:
-        # pdfminer akan mencoba sekuat tenaga mengambil teks sesuai layout
         text = extract_text(pdf_path)
         return text.strip() if text else "EMPTY_RESULT"
     except Exception as e:
