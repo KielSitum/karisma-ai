@@ -16,10 +16,10 @@ from psycopg2.extras import execute_values
 
 
 DB_CONFIG = {
-    "host":     "#",  # ganti sesuai region kamu
+    "host":     "#",  # ganti sesuai region 
     "port":     6543,
     "dbname":   "postgres",
-    "user":     "postgres.<project_ref>",  # format: postgres.<project_ref>
+    "user":     "postgres.<project_ref>",  
     "password": "#",
     "sslmode":  "require",
 }
@@ -42,7 +42,7 @@ def parse_skills(raw: str) -> list[str]:
 
 def main():
 
-    print(f"📂 Membaca {CSV_PATH} ...")
+    print(f"Membaca {CSV_PATH} ...")
     df = pd.read_csv(CSV_PATH)
     print(f"   {len(df):,} baris | {df['job_category_parent'].nunique()} unique job_category_parent")
 
@@ -122,7 +122,7 @@ def main():
     cur = conn.cursor()
 
     try:
-        print("\n📥 Insert Job_listings ...")
+        print("\nInsert Job_listings ...")
         execute_values(
             cur,
             """
@@ -133,9 +133,9 @@ def main():
             job_records,
             page_size=500,
         )
-        print(f"   ✅ {len(job_records)} baris")
+        print(f"   {len(job_records)} baris")
 
-        print("\n📥 Insert Skills ...")
+        print("\nInsert Skills ...")
         batch_size = 1000
         for i in range(0, len(skill_records), batch_size):
             batch = skill_records[i : i + batch_size]
@@ -150,9 +150,9 @@ def main():
                 page_size=500,
             )
             print(f"   ... {min(i + batch_size, len(skill_records)):,}/{len(skill_records):,}", end="\r")
-        print(f"   ✅ {len(skill_records):,} baris                    ")
+        print(f"   {len(skill_records):,} baris                    ")
 
-        print("\n📥 Insert Job_Skills ...")
+        print("\nInsert Job_Skills ...")
         for i in range(0, len(job_skill_records), batch_size):
             batch = job_skill_records[i : i + batch_size]
             execute_values(
@@ -166,14 +166,14 @@ def main():
                 page_size=500,
             )
             print(f"   ... {min(i + batch_size, len(job_skill_records)):,}/{len(job_skill_records):,}", end="\r")
-        print(f"   ✅ {len(job_skill_records):,} baris                    ")
+        print(f"   {len(job_skill_records):,} baris                    ")
 
         conn.commit()
-        print("\n✅ Semua data berhasil dicommit!")
+        print("\nSemua data berhasil dicommit!")
 
     except Exception as e:
         conn.rollback()
-        print(f"\n❌ Error, rollback: {e}")
+        print(f"\n Error, rollback: {e}")
         raise
 
     finally:

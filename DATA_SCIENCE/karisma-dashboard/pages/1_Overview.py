@@ -8,7 +8,7 @@ from utils.loader import load_data, get_salary_df
 from utils.filters import render_sidebar_filters
 from components.kpi_cards import render_kpi_cards
 
-# ── Config ──
+# Config
 st.set_page_config(page_title="Overview — Dashboard", page_icon="🏠", layout="wide")
 
 css_path = Path(__file__).parent.parent / "assets" / "style.css"
@@ -16,12 +16,12 @@ if css_path.exists():
     with open(css_path) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# ── Data ──
+# Data
 df_raw = load_data()
 df     = render_sidebar_filters(df_raw)
 df_sal = get_salary_df(df)
 
-# ── Header ──
+# Header
 st.markdown("""
 <div class="page-header">
     <h1>🏠 Overview</h1>
@@ -29,12 +29,12 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ── KPI Cards ──
+# KPI Cards
 render_kpi_cards(df, df_sal)
 
 st.markdown("---")
 
-# ── Treemap Industry × Job Cluster ──
+# Treemap Industry × Job Cluster
 import plotly.express as px
 
 st.markdown('<p class="section-label">Komposisi Pasar</p>', unsafe_allow_html=True)
@@ -70,7 +70,7 @@ if len(treemap_data) > 0:
 
 st.markdown("---")
 
-# ── 7 Insight Cards ──
+# 7 Insight Cards
 st.markdown('<p class="section-label">Key Insights</p>', unsafe_allow_html=True)
 st.markdown("#### 7 Insight Tajam Pasar Kerja Glints")
 

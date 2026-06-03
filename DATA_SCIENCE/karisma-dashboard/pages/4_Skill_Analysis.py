@@ -18,12 +18,12 @@ if css_path.exists():
     with open(css_path) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# ── Data ──
+# Data
 df_raw = load_data()
 df     = render_sidebar_filters(df_raw)
 df_sal = get_salary_df(df)
 
-# ── Header ──
+# Header
 st.markdown("""
 <div class="page-header">
     <h1>🛠 Skill Analysis</h1>
@@ -31,7 +31,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ── Section A: Top Skills ──
+# Section A: Top Skills
 st.markdown('<p class="section-label">A — Top Skills Paling Dibutuhkan</p>', unsafe_allow_html=True)
 
 n_skills = st.slider("Tampilkan top N skills", min_value=10, max_value=40, value=25, step=5)
@@ -39,7 +39,7 @@ st.plotly_chart(chart_top_skills(df, n=n_skills), use_container_width=True)
 
 st.markdown("---")
 
-# ── Section B: Skill Premium ──
+# Section B: Skill Premium
 st.markdown('<p class="section-label">B — Skill Premium (Korelasi Salary)</p>', unsafe_allow_html=True)
 
 if len(df_sal) > 0:
@@ -54,7 +54,7 @@ else:
 
 st.markdown("---")
 
-# ── Section C: Skill Versatile ──
+# Section C: Skill Versatile
 st.markdown('<p class="section-label">C — Skill Paling Versatile (Lintas Industri)</p>', unsafe_allow_html=True)
 
 col1, col2 = st.columns([1, 1])

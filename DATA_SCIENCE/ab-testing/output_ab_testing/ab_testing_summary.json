@@ -1,0 +1,36 @@
+{
+  "experiment_name": "Karisma AI NER A/B Testing",
+  "total_samples": 50,
+  "variant_a": {
+    "description": "Model Lama + Preprocessing Lama",
+    "mean_skills": 164.52,
+    "std_skills": 81.8819,
+    "avg_latency_ms": 8779.47
+  },
+  "variant_b": {
+    "description": "Model Baru + Preprocessing Baru (word-wrap aware)",
+    "mean_skills": 106.24,
+    "std_skills": 61.8164,
+    "avg_latency_ms": 8608.82
+  },
+  "statistical_test": {
+    "method": "Paired T-Test TWO-TAILED (scipy.stats.ttest_rel, alternative=\"two-sided\")",
+    "hypothesis_h0": "μB = μA (tidak ada perbedaan)",
+    "hypothesis_h1": "μB ≠ μA (ada perbedaan, dua arah)",
+    "t_statistic": -14.67025,
+    "p_value_two_tailed": 0.0,
+    "alpha": 0.05,
+    "significant": true,
+    "cohens_d": -2.0957,
+    "effect_size": "Besar",
+    "ci_95_diff_B_minus_A": [
+      -66.2634,
+      -50.2966
+    ]
+  },
+  "improvement": {
+    "skill_improvement_pct": -35.42,
+    "latency_overhead_pct": -1.94,
+    "recommendation": "Review diperlukan"
+  }
+}
