@@ -76,9 +76,9 @@ Berisi seluruh file data yang dihasilkan oleh pipeline, baik data mentah hasil s
 
 | File | Baris | Kolom | Keterangan |
 |---|---|---|---|
-| `full_dataset_glints.csv` | ±60.000 | 13 | Raw output scraper, belum dibersihkan |
-| `glints_nlp_ready.csv` | ±60.000 | 20 | Skills ternormalisasi, salary ter-encode, siap untuk model NLP |
-| `glints_v2_cleaned.csv` | ±60.000 | 30 | Kolom paling lengkap, label human-readable, untuk dashboard |
+| `full_dataset_glints.csv` | +72.500 | 13 | Raw output scraper, belum dibersihkan |
+| `glints_nlp_ready.csv` | +47.700 | 5 | Skills ternormalisasi, salary ter-encode, siap untuk model NLP |
+| `glints_v2_cleaned.csv` | +47.700 | 30 | Kolom paling lengkap, label human-readable, untuk dashboard |
 | `glints_category_output.csv` | 65 | 7 | 1 baris per job category, aggregasi salary & skills |
 
 ---
