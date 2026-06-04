@@ -23,7 +23,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 | File | Granularitas | Tujuan |
 |---|---|---|
 | `full_dataset_glints.csv` | 1 baris = 1 lowongan | Raw output scraper |
-| `glints_nlp_ready.csv` | 1 baris = 1 lowongan | Input model NLP / ML |
+| `glints_nlp_ready.csv` | 1 baris = 1 lowongan | Input pipeline NLP / career recommendation (identitas + skills) |
 | `glints_v2_cleaned.csv` | 1 baris = 1 lowongan | Visualisasi & Dashboard |
 | `glints_category_output.csv` | 1 baris = 1 kategori job | Seeding database Supabase |
 
@@ -61,32 +61,15 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 | `min_avg_salary` | Grouped (Database Seeding) | float (USD) |
 | `max_avg_salary` | Grouped (Database Seeding) | float (USD) |
 
-### `glints_nlp_ready.csv` (22 kolom)
+### `glints_nlp_ready.csv` (5 kolom)
 
 | Kolom | Kategori | Tipe Data |
 |---|---|---|
 | `Job_Link` | Identitas | string |
-| `Title` | Identitas | string |
-| `Industry` | Hierarki Kategori (L1) | string |
 | `Job_Category_parent` | Hierarki Kategori (L2) | string |
 | `Job_Category` | Hierarki Kategori (L3) | string |
-| `salary_min_monthly` | Salary Processed (IDR) | float |
-| `salary_max_monthly` | Salary Processed (IDR) | float |
-| `salary_min_usd` | Salary Processed (USD) | float |
-| `salary_max_usd` | Salary Processed (USD) | float |
-| `salary_avg` | Salary Processed (USD) | float |
-| `salary_avg_usd` | Salary Processed (USD) | float |
-| `salary_avg_capped` | Salary Processed (USD) | float |
-| `salary_normalized` | Salary Encoded | float [0.0 – 1.0] |
-| `salary_tier` | Salary Encoded | string (ordinal categorical) |
-| `salary_tier_encoded` | Salary Encoded | integer |
-| `has_salary` | Salary Encoded | boolean |
 | `Skills` | Skills | string (comma-separated) |
 | `skills_list` | Skills | list of string (Python list repr) |
-| `Job_Type` | Job Context | string (categorical) |
-| `Work Arrangement` | Job Context | string (categorical) |
-| `Education` | Job Context | string (categorical) |
-| `Experience` | Job Context | integer |
 
 ### `glints_v2_cleaned.csv` (30 kolom)
 
@@ -150,7 +133,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `string` |
 | **Nullable** | ✅ Wajib ada |
-| **Tersedia di** | `full_dataset_glints.csv`, `glints_nlp_ready.csv`, `glints_v2_cleaned.csv` |
+| **Tersedia di** | `full_dataset_glints.csv`, `glints_v2_cleaned.csv` |
 | **Contoh Nilai** | `Data Analyst` |
 
 **Deskripsi:** Nama posisi/jabatan pekerjaan seperti yang tertera di posting
@@ -167,7 +150,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `string` |
 | **Nullable** | ⚠️ Nullable |
-| **Tersedia di** | `full_dataset_glints.csv`, `glints_nlp_ready.csv`, `glints_v2_cleaned.csv` |
+| **Tersedia di** | `full_dataset_glints.csv`, `glints_v2_cleaned.csv` |
 | **Contoh Nilai** | `Technology` |
 
 **Deskripsi:** Bidang industri perusahaan yang membuka lowongan (Level 1 hierarki)
@@ -265,7 +248,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `float` |
 | **Nullable** | ⚠️ Nullable |
-| **Tersedia di** | `glints_nlp_ready.csv`, `glints_v2_cleaned.csv` |
+| **Tersedia di** | `glints_v2_cleaned.csv` |
 | **Contoh Nilai** | `5000000.0` |
 
 **Deskripsi:** Batas bawah gaji setelah dikonversi ke IDR per bulan
@@ -280,7 +263,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `float` |
 | **Nullable** | ⚠️ Nullable |
-| **Tersedia di** | `glints_nlp_ready.csv`, `glints_v2_cleaned.csv` |
+| **Tersedia di** | `glints_v2_cleaned.csv` |
 | **Contoh Nilai** | `8000000.0` |
 
 **Deskripsi:** Batas atas gaji setelah dikonversi ke IDR per bulan
@@ -353,7 +336,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `float` |
 | **Nullable** | ⚠️ Nullable |
-| **Tersedia di** | `glints_nlp_ready.csv`, `glints_v2_cleaned.csv` |
+| **Tersedia di** | `glints_v2_cleaned.csv` |
 | **Contoh Nilai** | `312.5` |
 
 **Deskripsi:** Batas bawah gaji bulanan dalam USD (hasil konversi dari IDR)
@@ -368,7 +351,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `float` |
 | **Nullable** | ⚠️ Nullable |
-| **Tersedia di** | `glints_nlp_ready.csv`, `glints_v2_cleaned.csv` |
+| **Tersedia di** | `glints_v2_cleaned.csv` |
 | **Contoh Nilai** | `500.0` |
 
 **Deskripsi:** Batas atas gaji bulanan dalam USD
@@ -381,7 +364,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `float` |
 | **Nullable** | ⚠️ Nullable |
-| **Tersedia di** | `glints_nlp_ready.csv`, `glints_v2_cleaned.csv` |
+| **Tersedia di** | `glints_v2_cleaned.csv` |
 | **Contoh Nilai** | `406.25` |
 
 **Deskripsi:** Rata-rata gaji (avg dari salary_min_usd & salary_max_usd) dalam USD per bulan
@@ -396,7 +379,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `float` |
 | **Nullable** | ⚠️ Nullable |
-| **Tersedia di** | `glints_nlp_ready.csv`, `glints_v2_cleaned.csv` |
+| **Tersedia di** | `glints_v2_cleaned.csv` |
 | **Contoh Nilai** | `406.25` |
 
 **Deskripsi:** Alias dari salary_avg, di-round 2 desimal. Digunakan untuk konsistensi naming.
@@ -411,7 +394,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `float` |
 | **Nullable** | ⚠️ Nullable |
-| **Tersedia di** | `glints_nlp_ready.csv` |
+| **Tersedia di** |  |
 | **Contoh Nilai** | `406.25` |
 
 **Deskripsi:** salary_avg yang sudah di-clip di persentil ke-99 untuk menghilangkan outlier ekstrem
@@ -441,7 +424,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `float [0.0 – 1.0]` |
 | **Nullable** | ⚠️ Nullable |
-| **Tersedia di** | `glints_nlp_ready.csv` |
+| **Tersedia di** |  |
 | **Contoh Nilai** | `0.3241` |
 
 **Deskripsi:** salary_avg_capped yang dinormalisasi dengan MinMaxScaler ke rentang [0, 1]
@@ -456,7 +439,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `string (ordinal categorical)` |
 | **Nullable** | ⚠️ Nullable |
-| **Tersedia di** | `glints_nlp_ready.csv`, `glints_v2_cleaned.csv` |
+| **Tersedia di** | `glints_v2_cleaned.csv` |
 | **Contoh Nilai** | `Mid` |
 
 **Deskripsi:** Label tier salary berdasarkan salary_avg_usd per bulan
@@ -471,7 +454,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `integer` |
 | **Nullable** | ⚠️ Nullable |
-| **Tersedia di** | `glints_nlp_ready.csv` |
+| **Tersedia di** |  |
 | **Contoh Nilai** | `3` |
 
 **Deskripsi:** Encoding ordinal dari salary_tier (Entry=1 s/d Executive=6)
@@ -486,7 +469,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `boolean` |
 | **Nullable** | ✅ Wajib ada |
-| **Tersedia di** | `glints_nlp_ready.csv`, `glints_v2_cleaned.csv` |
+| **Tersedia di** | `glints_v2_cleaned.csv` |
 | **Contoh Nilai** | `True` |
 
 **Deskripsi:** Flag apakah posting ini mencantumkan informasi salary yang valid
@@ -550,7 +533,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `string (categorical)` |
 | **Nullable** | ✅ Wajib ada |
-| **Tersedia di** | `full_dataset_glints.csv`, `glints_nlp_ready.csv`, `glints_v2_cleaned.csv` |
+| **Tersedia di** | `full_dataset_glints.csv`, `glints_v2_cleaned.csv` |
 | **Contoh Nilai** | `FULL_TIME` |
 
 **Deskripsi:** Tipe kontrak/ikatan kerja (nilai raw dari API)
@@ -580,7 +563,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `string (categorical)` |
 | **Nullable** | ✅ Wajib ada |
-| **Tersedia di** | `full_dataset_glints.csv`, `glints_nlp_ready.csv`, `glints_v2_cleaned.csv` |
+| **Tersedia di** | `full_dataset_glints.csv`, `glints_v2_cleaned.csv` |
 | **Contoh Nilai** | `REMOTE` |
 
 **Deskripsi:** Pengaturan lokasi kerja (nilai raw dari API)
@@ -610,7 +593,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `string (categorical)` |
 | **Nullable** | ✅ Wajib ada |
-| **Tersedia di** | `full_dataset_glints.csv`, `glints_nlp_ready.csv`, `glints_v2_cleaned.csv` |
+| **Tersedia di** | `full_dataset_glints.csv`, `glints_v2_cleaned.csv` |
 | **Contoh Nilai** | `BACHELOR_DEGREE` |
 
 **Deskripsi:** Persyaratan pendidikan minimum untuk posisi ini (nilai raw dari API)
@@ -655,7 +638,7 @@ full_dataset_glints.csv         ← raw scrape, ~60K baris
 |---|---|
 | **Tipe Data** | `integer` |
 | **Nullable** | ✅ Wajib ada |
-| **Tersedia di** | `full_dataset_glints.csv`, `glints_nlp_ready.csv`, `glints_v2_cleaned.csv` |
+| **Tersedia di** | `full_dataset_glints.csv`, `glints_v2_cleaned.csv` |
 | **Contoh Nilai** | `3` |
 
 **Deskripsi:** Minimum tahun pengalaman kerja yang dibutuhkan
