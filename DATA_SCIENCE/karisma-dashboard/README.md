@@ -19,7 +19,7 @@ karisma-dashboard/
 │   ├── 4_Skill_Analysis.py
 │   └── 5_Job_Explorer.py
 ├── data/
-│   └── glints_v2_cleaned.csv     # ← letakkan file CSV di sini
+│   └── glints_v2_cleaned.csv     
 ├── utils/
 │   ├── loader.py
 │   └── filters.py
