@@ -196,10 +196,40 @@ Total **42 kolom** terdokumentasi, mencakup 11 kategori: Identitas, Hierarki Kat
 ### 📂 AB-Testing/
 Berisi script pengujian A/B Testing untuk memvalidasi insight dan asumsi yang ditemukan selama proses EDA.
 
-**Cara menjalankan:**
-```bash
-# Run All Code IPYNB
-```
+**Cara Menjalankan A/B Testing**
+
+*(Ikuti panduan di bawah ini untuk mereplikasi proses A/B testing di mesin lokal Anda)*
+
+1. **Persiapan Lingkungan dan Data**
+* Pastikan Anda telah menginstal semua dependensi yang dibutuhkan.
+
+2. **Eksekusi Model Varian A (Versi 1)**
+* Buka dan jalankan semua *cell* pada *notebook* `model1_karisma_skill_extractor_v1.ipynb`.
+* **Output:** Model akan menghasilkan file **`.keras`** (contoh: `model_v1.keras`). 
+* **Langkah Selanjutnya:** File tersebut tidak tersimpan secara otomatis di direktori *root*. Anda harus **memindahkan file `.keras` tersebut secara manual** ke direktori *root*, pastikan berada di tingkat yang sama dengan file `ab_testing_karisma_ai_two_tailed.ipynb`.
+
+3. **Eksekusi Model Varian B (Versi 2)**
+* Buka dan jalankan semua *cell* pada *notebook* `model1_karisma_skill_extractor_v2.ipynb`.
+* **Output:** Model akan menghasilkan file **`.keras`** untuk V2 (dengan prapemrosesan/ *preprocessing* yang ditingkatkan). 
+* **Langkah Selanjutnya:** Sama seperti sebelumnya, **pindahkan file `.keras` ini secara manual** ke direktori *root*, pastikan berada di tingkat yang sama dengan file `ab_testing_karisma_ai_two_tailed.ipynb`.
+
+---
+
+**⚡ Opsi Jalur Cepat (Alternatif)**
+Jika Anda ingin menghemat waktu dan melewati proses pelatihan ulang model dari awal, Anda dapat mengunduh file **`.keras`** yang siap pakai secara langsung. 
+
+-  Unduh file model melalui tautan Google Drive berikut: 
+   **[[karisma_skill_extractor_v1.keras](https://drive.google.com/file/d/1jpFw9KohUalNoxHHAT2TEgfTBn_-P4w6/view?usp=sharing)]** dan **[[karisma_skill_extractor_v2.keras](https://drive.google.com/file/d/1f3svDuzCIiWpGDbgRi_FKvyJbj0RS4KR/view?usp=sharing)]**
+-  Setelah diunduh, letakkan file `.keras` tersebut secara langsung ke direktori *root* (di tingkat yang sama dengan `ab_testing_karisma_ai_two_tailed.ipynb`).
+
+4. **Lakukan Pengujian Signifikansi (*Two-Tailed* / Dua Arah)**
+* Buka *notebook* `ab_testing_karisma_ai_two_tailed.ipynb`.
+* Pastikan *path* (jalur file) untuk hasil V1 dan V2 di *notebook* sesuai dengan output dari langkah 2 dan 3.
+* Jalankan semua *cell* untuk mendapatkan perhitungan metrik konversi (misalnya, jumlah *skill* yang relevan), *p-value*, dan visualisasi distribusi.
+* Output akhir dari analisis statistik ini akan diekspor ke folder `output_ab_testing/`.
+
+5. **Interpretasi Hasil**
+* Untuk melihat ringkasan temuan dan analisis mendalam mengenai efektivitas pengurangan *skill* (sifat konservatif Varian B vs. kuantitas Varian A), Anda dapat membaca hasil pengujian secara langsung di dalam *notebook*.
 
 ---
 
