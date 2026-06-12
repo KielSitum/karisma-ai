@@ -15,9 +15,9 @@
 
 ---
 
-## 🛠️ Arsitektur & Tech Stack
+## 🛠️ Architecture & Tech Stack
 
-Aplikasi ini dibangun dengan arsitektur modern yang memisahkan antara klien (*frontend*), server (*backend*), dan layanan *AI*.
+This application is built using a modern architecture that separates the frontend, backend, and AI services, enabling better scalability, maintainability, and performance.
 
 <p align="center">
   <img src="frontend/public/arsitektur-karisma-ai.png" width="500" alt="Arsitektur Karisma AI">
@@ -215,11 +215,11 @@ Make both buckets **public** so files can be accessed via public URL.
 
 ---
 
-## Tim Pengembang (CC26-PSU202)
+## Development Team (CC26-PSU202)
 
-| Nama | ID | Universitas | Peran |
+| Name | Cohort ID | University | Role |
 | :--- | :--- | :--- | :--- |
-| Brisbane Jovan Rivaldi Sihombing | CACC319D6X0803 | Universitas Sumatera Utara | Project Manager & AI Engineer |
+| Brisbane Jovan Rivaldi Sihombing | CACC319D6Y0505 | Universitas Sumatera Utara | Project Manager & AI Engineer |
 | Jesica Eldamaris Maha | CACC319D6X0803 | Universitas Sumatera Utara | AI Engineer |
 | Mayadi Alamsyah Putra Silalahi | CDCC319D6Y0416 | Universitas Sumatera Utara | Data Scientist |
 | Alfi Syahrin | CDCC319D6Y1274 | Universitas Sumatera Utara | Data Scientist |
